@@ -24,6 +24,9 @@ const auth = require('../middleware/jwt')
 const route = express.Router();
 // require('./chatRoutes')
 
+route.get('/',(req,res)=>{
+  res.status(200).json({message: 'REquest sucessfull'})
+})
 //auth
 route.post("/register", register);
 route.post("/login", login);
