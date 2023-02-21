@@ -14,7 +14,7 @@ const cors = require('cors')
 const server= http.createServer(app)
 const io = socket(server,{
   cors: {
-    origin: `http://localhost:${process.env.PORT}`,
+    origin: `${process.env.PORT}`,
     credentials: true,
   },
 })
@@ -27,7 +27,7 @@ app.use(function(req, res, next) {
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 app.use('/',route)
-// app.use(cors)
+app.use(cors)
 
 
 const botname = 'Crbot'
@@ -49,7 +49,7 @@ io.on('connection',(socket)=>{
   })
 })
 
-server.listen(process.env.PORT,()=>{
+server.listen(process.env.PORT||5000,()=>{
   console.log(`server is running on ${process.env.PORT}`)
 })
 
