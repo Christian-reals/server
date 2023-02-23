@@ -5,6 +5,7 @@ const { genSalt } = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { default: mongoose } = require("mongoose");
 const sendVerificationEmail = require("../utils/mailer");
+const { verifyToken } = require("../middleware/jwt");
 
 const register = async (req, res) => {
   const { password, confirm_password, userName, email, ...others } = req.body;
@@ -49,6 +50,11 @@ const register = async (req, res) => {
     }
   }
 };
+
+const verifyMail = (req,res)=>{
+  const {token} = req.params
+  verifyToken(token)
+}
 
 const createProfile = async (req, res) => {
   const { regId, ...profileData } = req.body;
@@ -110,4 +116,8 @@ const logOut = (req, res) => {
   const { token } = req.header;
 };
 
-module.exports = { login, register, createProfile };
+function resetPassword(params) {
+  
+}
+
+module.exports = { login, register, createProfile,verifyMail };

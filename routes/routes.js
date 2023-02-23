@@ -5,8 +5,8 @@ const {
   updateEvent,
   deleteEvent,
   getEvent,
-} = require("../controllers/Events");
-const { login, register } = require("../controllers/auth");
+} = require("../controllers/events");
+const { login, register, verifyMail } = require("../controllers/auth");
 const {
   createMessage,
   getAllChats,
@@ -19,7 +19,7 @@ const {
   createChat,
 } = require("../controllers/chat");
 //auth middleware
-const auth = require('../middleware/jwt')
+const auth = require('../middleware/jwt').authMiddleware
 
 const route = express.Router();
 // require('./chatRoutes')
@@ -27,9 +27,12 @@ const route = express.Router();
 route.get('/',(req,res)=>{
   res.status(200).json({message: 'REquest sucessfull'})
 })
+
+
 //auth
 route.post("/register", register);
 route.post("/login", login);
+route.get('verify/:token',verifyMail)
 
 
 //Events

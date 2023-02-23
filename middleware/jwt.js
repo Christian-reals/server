@@ -1,15 +1,8 @@
 const  jwt = require('jsonwebtoken');
 const SECRET_KEY = process.env.SECRET_KEY;
 
-const authMiddleware = async (req, res, next) => {
-    const authorization = req.headers.authorization;
-    if (!authorization) {
-        return res.status(401).json({
-            message: 'No Authorization Header'
-        })
-    }
+async function  verifyToken (token) {
     try {
-        const token = authorization.split('Bearer ')[1];
         if (!token) {
             return res.status(401).json({
                 message: 'Invalid Token Format'
@@ -39,4 +32,16 @@ const authMiddleware = async (req, res, next) => {
     }
 }
 
-module.exports = authMiddleware
+const authMiddleware = async (req, res, next) => {
+    const authorization = req.headers.authorization;
+    if (!authorization) {
+        return res.status(401).json({
+            message: 'No Authorization Header'
+        })
+    }
+    const token = authorization.split('Bearer ')[1];
+    verifyToken(token)
+
+}
+
+module.exports = {authMiddleware,verifyToken}
