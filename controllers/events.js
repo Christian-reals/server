@@ -10,7 +10,7 @@ const dirname = dirnamearr.splice(0,dirnamearr.length-1).join('/')
 
 //setting up multer diskStorage method
 const storage = multer.diskStorage({
-	destination: `${dirname}/uploads`,
+	destination: `${dirname}/tmp/uploads`,
 	filename: (req, file, cb) => {
 		cb(null, file.fieldname +Date.now()+'.jpg')
 	},

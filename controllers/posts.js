@@ -10,7 +10,7 @@ const dirname = dirnamearr.splice(0,dirnamearr.length-1).join('/')
 //setting up multer diskStorage method
 
 const storage = multer.diskStorage({
-	destination: `${dirname}/uploads`,
+	destination: `${dirname}/tmp/uploads`,
 	filename: (req, file, cb) => {
         console.log(file.originalname)
 		cb(null, file.fieldname+Date.now()+path.extname(file.originalname))
