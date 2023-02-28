@@ -6,6 +6,7 @@ const jwt = require("jsonwebtoken");
 const { default: mongoose } = require("mongoose");
 const sendVerificationEmail = require("../utils/mailer");
 const { verifyToken } = require("../middleware/jwt");
+const { redirect } = require("express/lib/response");
 
 const register = async (req, res) => {
   const { password, confirm_password, userName, email, ...others } = req.body;
@@ -51,9 +52,16 @@ const register = async (req, res) => {
   }
 };
 
-const verifyMail = (req,res)=>{
+const  verifyMail = async (req,res)=>{
   const {token} = req.params
-  verifyToken(token)
+  try {
+    await verifyToken(token)
+    res.redirect('http://127.0.0.1:5173/profile')
+
+  } catch (error) {
+    res
+  }
+  
 }
 
 const createProfile = async (req, res) => {

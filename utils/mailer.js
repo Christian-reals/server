@@ -19,7 +19,7 @@ const sendVerificationEmail = async (email, token) => {
     subject: 'Email Verification',
     html: `
       <p>Please click on the following link to verify your email address:</p>
-      <a href="http://localhost:3000/verify-email/${token}">Verify Email</a>
+      <a href="https://christianreals-backend.onrender.com/verify/${token}">Verify Email</a>
     `
   };
 
