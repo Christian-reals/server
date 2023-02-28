@@ -56,10 +56,10 @@ const  verifyMail = async (req,res)=>{
   const {token} = req.params
   try {
     await verifyToken(token)
-    res.redirect('http://127.0.0.1:5173/profile')
+    res.status(200).redirect('http://127.0.0.1:5173/profile',).json({msg:'user verified'})
 
   } catch (error) {
-    res
+    res.status(401).json({error,msg:'verification failed'})
   }
   
 }
