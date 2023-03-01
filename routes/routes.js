@@ -32,7 +32,7 @@ route.get('/',(req,res)=>{
 //auth
 route.post("/register", register);
 route.post("/login", login);
-route.get('verify/:token',verifyMail)
+route.get('verify/',verifyMail)
 
 
 //Events

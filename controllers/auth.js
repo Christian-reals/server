@@ -54,6 +54,7 @@ const register = async (req, res) => {
 
 const  verifyMail = async (req,res)=>{
   const {token} = req.query
+  console.log(token, 'request seen')
   try {
     await verifyToken(token)
     res.status(200).redirect('http://127.0.0.1:5173/profile',).json({msg:'user verified'})
