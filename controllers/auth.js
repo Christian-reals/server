@@ -33,9 +33,12 @@ const register = async (req, res) => {
       try {
         await user.save(user);
         const id = user._id;
-        const token = jwt.sign(id , process.env.SECRET_KEY, {
+        console.log('saved')
+        const token = jwt.sign({id} , process.env.SECRET_KEY, {
           expiresIn: "30m",
         });
+        console.log('token ')
+        
         sendVerificationEmail(email, token);
         return res
           .status(201)
@@ -43,7 +46,7 @@ const register = async (req, res) => {
       } catch (error) {
         return res
           .status(400)
-          .json({ msg: "user couldn not be registered", error: error });
+          .json({ msg: "user could not be registered", error: error });
       }
     } else {
       res
