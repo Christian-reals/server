@@ -9,6 +9,7 @@ const { verifyToken } = require("../middleware/jwt");
 const { redirect } = require("express/lib/response");
 
 const register = async (req, res) => {
+  console.log('register request')
   const { password, confirm_password, userName, email, ...others } = req.body;
   const usernameExist = await registrationDb.findOne({ userName: userName });
   const emailExist = await registrationDb.findOne({ email });
@@ -32,8 +33,8 @@ const register = async (req, res) => {
       try {
         await user.save(user);
         const id = user._id;
-        const token = jwt.sign({ id }, process.env.SECRET_KEY, {
-          expiresIn: "60s",
+        const token = jwt.sign(id , process.env.SECRET_KEY, {
+          expiresIn: "30m",
         });
         sendVerificationEmail(email, token);
         return res
@@ -55,14 +56,8 @@ const register = async (req, res) => {
 const  verifyMail = async (req,res)=>{
   const {token} = req.query
   console.log(token, 'request seen')
-  try {
-    await verifyToken(token)
-    res.status(200).redirect('http://127.0.0.1:5173/profile',).json({msg:'user verified'})
-
-  } catch (error) {
-    res.status(401).json({error,msg:'verification failed'})
-  }
-  
+    await verifyToken()
+    console.log('verified')  
 }
 
 const createProfile = async (req, res) => {

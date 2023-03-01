@@ -20,6 +20,7 @@ const {
 } = require("../controllers/chat");
 //auth middleware
 const auth = require('../middleware/jwt').authMiddleware
+const verify = require('../middleware/jwt').verifyToken
 
 const route = express.Router();
 // require('./chatRoutes')
@@ -32,7 +33,7 @@ route.get('/',(req,res)=>{
 //auth
 route.post("/register", register);
 route.post("/login", login);
-route.get('verify/',verifyMail)
+route.get('/verify',verify)
 
 
 //Events
