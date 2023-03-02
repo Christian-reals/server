@@ -34,7 +34,7 @@ const register = async (req, res) => {
         await user.save(user);
         const id = user._id;
         console.log('saved')
-        const token = jwt.sign({id} , process.env.SECRET_KEY, {
+        const token = jwt.sign(id , process.env.SECRET_KEY, {
           expiresIn: "30m",
         });
         console.log('token ')
@@ -96,10 +96,14 @@ const login = async (req, res) => {
         const userValid = await bcrypt.compare(password, user.password);
         // console.log(userValid,password)
         if (userValid) {
-          const id = Userdb.find({
+          const validUser = Userdb.find({
             registrationDataId: mongoose.Types.ObjectId(user[0]._id),
-          })._id;
-          console.log(id);
+          })
+          console.log('valid')
+          const id = validUser._id;
+          const username = validUser.userName
+          console.log(id,username)
+
           const token = jwt.sign({ id, username }, process.env.SECRET_KEY, {
             expiresIn: "30d",
           });
