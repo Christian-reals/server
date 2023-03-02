@@ -1,4 +1,5 @@
 const  jwt = require('jsonwebtoken');
+require('dotenv')
 const SECRET_KEY = process.env.SECRET_KEY;
 
 async function   verifyToken (req,res,next) {
@@ -9,6 +10,8 @@ async function   verifyToken (req,res,next) {
                 msg: 'Invalid Token Format or no token found'
             })
         }
+        console.log(SECRET_KEY)
+
         await jwt.verify(token, SECRET_KEY);
         console.log('verified')
         next()

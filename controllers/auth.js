@@ -33,8 +33,9 @@ const register = async (req, res) => {
       try {
         await user.save(user);
         const id = user._id;
+        const username= user.userName
         console.log('saved')
-        const token = jwt.sign(id , process.env.SECRET_KEY, {
+        const token = jwt.sign({id,username} , process.env.SECRET_KEY, {
           expiresIn: "30m",
         });
         console.log('token ')
@@ -57,10 +58,7 @@ const register = async (req, res) => {
 };
 
 const  verifyMail = async (req,res)=>{
-  const {token} = req.query
-  console.log(token, 'request seen')
-    await verifyToken()
-    console.log('verified')  
+  res.redirect('http://127.0.0.1:5173/profile')
 }
 
 const createProfile = async (req, res) => {
@@ -94,15 +92,9 @@ const login = async (req, res) => {
       if (user) {
         // console.log(user);
         const userValid = await bcrypt.compare(password, user.password);
-        // console.log(userValid,password)
         if (userValid) {
-          const validUser = Userdb.find({
-            registrationDataId: mongoose.Types.ObjectId(user[0]._id),
-          })
-          console.log('valid')
-          const id = validUser._id;
-          const username = validUser.userName
-          console.log(id,username)
+          const id = mongoose.Types.ObjectId(user._id);
+          const username = user.userName
 
           const token = jwt.sign({ id, username }, process.env.SECRET_KEY, {
             expiresIn: "30d",

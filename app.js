@@ -7,6 +7,7 @@ const http = require('http')
 const socket = require('socket.io')
 const formatmsg = require('./utils/formatMessage')
 require('./db/connectdb')
+const dotenv=require('dotenv')
 const cors = require('cors')
 
 
