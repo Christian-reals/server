@@ -6,7 +6,7 @@ const {
   deleteEvent,
   getEvent,
 } = require("../controllers/events");
-const { login, register, verifyMail } = require("../controllers/auth");
+const { login, register, verifyMail,createProfile } = require("../controllers/auth");
 const {
   createMessage,
   getAllChats,
@@ -33,6 +33,7 @@ route.get('/',(req,res)=>{
 //auth
 route.post("/register", register);
 route.post("/login", login);
+route.post("/profile", createProfile);
 route.get('/verify',verify)
 
 
@@ -45,10 +46,10 @@ route.delete("/event/:id", deleteEvent);
 
 
 //chats and message
-route.post("/chat/message", createMessage);
-route.get("/chat", getAllChats);
-route.post('/chat',createChat)
-route.get("/chat/:id", getChat);
+route.post("/chat/message",auth, createMessage);
+route.get("/chat",auth, getAllChats);
+route.post('/chat',auth,createChat)
+route.get("/chat/:id",auth, getChat);
 route.put("/chat/message/:id",auth, updateMessage);
 route.post("/chat/message/react/:id",auth, reactToMessage);
 route.post("/chat/message/reply/:id",auth, replyMessage);

@@ -122,6 +122,7 @@ var profileSchema = new mongoose.Schema({
     },
     weight_unit:{
         type:String,
+        default:'kg',
         required:[true,`weight cannot be empty`],
         
     },
@@ -208,22 +209,22 @@ var profileSchema = new mongoose.Schema({
         
     },
     family_description:{
-        type:String,
+        type:Array,
         required:[true,`family_description cannot be empty`],
         
     },
     colleague_description:{
-        type:String,
+        type:Array,
         required:[true,`colleague_description about cannot be empty`],
         
     },
     exPartner_description:{
-        type:String,
+        type:Array,
         required:[true,`exPartner_description about cannot be empty`],
         
     },    
     friend_description:{
-        type:String,
+        type:Array,
         required:[true,`friend_description about cannot be empty`],
         
     },
@@ -239,11 +240,11 @@ var profileSchema = new mongoose.Schema({
         required:[true,`ideal_holiday cannot be empty`],
         
     },
-    music_choice:{
-        type:String,
-        required:[true,`music_choice cannot be empty`],
+    // music_choice:{
+    //     type:String,
+    //     required:[true,`music_choice cannot be empty`],
         
-    },
+    // },
     desire:{
         type:String,
         required:[true,`desire cannot be empty`],
@@ -271,27 +272,27 @@ var profileSchema = new mongoose.Schema({
         
     },
     church_role:{
-        type:String,
+        type:Array,
         required:[true,`church_role cannot be empty`],
         
     },
     other_church_role:{
         type:String,
-        required:[true,`other_church_role cannot be empty`],
+        // required:[true,`other_church_role cannot be empty`],
         
     },
     church_group_member:{
         type:String,
-        required:[true,`church_group_member cannot be empty`],
+        // required:[true,`church_group_member cannot be empty`],
         
     },    
     church_group_leader:{
         type:String,
-        required:[true,`church_group_member cannot be empty`],
+        // required:[true,`church_group_member cannot be empty`],
         
     },
     gender_roles_view:{
-        type:String,
+        type:Array,
         required:[true,`ethnic_background cannot be empty`],
         
     },
@@ -395,7 +396,8 @@ var profileSchema = new mongoose.Schema({
 var userschema = new mongoose.Schema({
     registrationDataId:{
         type:mongoose.Types.ObjectId,
-        ref:'registrationData'
+        ref:'registrationData',
+        required:[true,'registrationDataId can not be empty']
     },
     profile_data:profileSchema, 
     profile_complete:{

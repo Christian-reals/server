@@ -4,6 +4,7 @@ const fs = require("fs");
 const path = require("path");
 const multer = require("multer");
 const { default: mongoose } = require("mongoose");
+const { Userdb } = require("../models/userdb");
 
 //getting the directory outside controller
 const dirnamearr = __dirname.split(`\\`);
@@ -104,6 +105,13 @@ const createChat = async (req, res) => {
     const chat = new Chatdb({
       members:[recieverid,userid]
     });
+    chat.members.forEach(async (id) => {
+      await Userdb.findOneAndUpdate(
+        { _id: id },
+        { $push: { chats: mongoose.Types.ObjectId(chat._id) } }
+      ).exec();
+    });
+
     await chat.save(chat);
     res.status(201).json({ msg: "chat created successfully" });
   } catch (error) {
