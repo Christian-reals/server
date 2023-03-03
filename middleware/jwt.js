@@ -13,7 +13,8 @@ async function   verifyToken (req,res,next) {
         console.log(SECRET_KEY)
 
         await jwt.verify(token, SECRET_KEY);
-        console.log('verified')
+        const payload=await jwt.decode(token)
+        payload?res.json({msg:'email verified',payload}):null
         next()
     } catch (error) {
         if (error instanceof jwt.TokenExpiredError) {
@@ -24,7 +25,7 @@ async function   verifyToken (req,res,next) {
         }
         if (error instanceof jwt.JsonWebTokenError || error instanceof TokenError) {
             return res.status(401).json({
-                message: 'Invalid Tokenz',
+                message: 'Invalid Token',
                 error: error.message,
             })
         }
