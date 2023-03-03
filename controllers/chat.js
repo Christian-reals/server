@@ -106,6 +106,7 @@ const createChat = async (req, res) => {
       members:[recieverid,userid]
     });
     chat.members.forEach(async (id) => {
+      console.log(id)
       await Userdb.findOneAndUpdate(
         { _id: id },
         { $push: { chats: mongoose.Types.ObjectId(chat._id) } }
