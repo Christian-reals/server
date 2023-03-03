@@ -103,19 +103,23 @@ const createChat = async (req, res) => {
   try {
     const { recieverid, userid } = req.body;
     console.log(recieverid,userid)
-    const chat = new Chatdb({
-      members:[recieverid,userid]
-    });
-    chat.members.forEach(async (id) => {
-      console.log(id)
-      await Userdb.findOneAndUpdate(
-        { _id: id },
-        { $push: { chats: mongoose.Types.ObjectId(chat._id) } }
-      ).exec();
-    });
+    if (recieverid && userid) {
+      const chat = new Chatdb({
+        members:[recieverid,userid]
+      });
+      chat.members.forEach(async (id) => {
+        console.log(id)
+        await Userdb.findOneAndUpdate(
+          { _id: id },
+          { $push: { chats: mongoose.Types.ObjectId(chat._id) } }
+        ).exec();
+      });
+      await chat.save(chat);
+      res.status(201).json({ msg: "chat created successfully" });
+    } else {
+      res.status(401).json({ msg: "chat not created  no Id" });
+    }
 
-    await chat.save(chat);
-    res.status(201).json({ msg: "chat created successfully" });
   } catch (error) {
     console.log(error)
     res.status(400).json({ msg: "chat creation failed", error:error });
