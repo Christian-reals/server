@@ -102,6 +102,7 @@ const createMessage = async (req, res) => {
 const createChat = async (req, res) => {
   try {
     const { recieverid, userid } = req.body;
+    console.log(recieverid,userid)
     const chat = new Chatdb({
       members:[recieverid,userid]
     });
