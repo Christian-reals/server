@@ -15,7 +15,6 @@ async function   verifyToken (req,res,next) {
 
         await jwt.verify(token, SECRET_KEY);
         const payload=await jwt.decode(token)
-        payload?res.json({msg:'email verified',payload:payload}):null
         await registrationDb.findOneAndUpdate({_id:payload.id},{email_verified:true},{new:true})
         res.redirect(`http://127.0.0.1:5173/profile/?id=${payload.id}`)
         next()
