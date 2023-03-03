@@ -33,7 +33,7 @@ route.get('/',(req,res)=>{
 //auth
 route.post("/register", register);
 route.post("/login", login);
-route.get('/verify',verify,verifyMail)
+route.get('/verify',verify)
 
 
 //Events
