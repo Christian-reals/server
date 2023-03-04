@@ -17,6 +17,7 @@ const io = socket(server,{
   cors: {
     origin: `${process.env.PORT}`,
     credentials: true,
+    allowedHeaders: ['Authorization'],
   },
 })
 app.use(express.urlencoded({extended:false}))
@@ -27,8 +28,10 @@ app.use(function(req, res, next) {
   });
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
-app.use(cors)
+app.use(cors())
 app.use('/',route)
+
+
 
 
 const botname = 'Crbot'
