@@ -40,21 +40,26 @@ async function   verifyToken (req,res,next) {
 }
 
 const authMiddleware = async (req, res, next) => {
+    console.log(req)
     const authorization = req.headers.authorization;
+    console.log(authorization)
     if (!authorization) {
         return res.status(401).json({
             message: 'No Authorization Header'
         })
     }
     const token = authorization.split('Bearer ')[1];
+    console.log(token)
+
     try {
         if (!token) {
             return res.status(401).json({
                 message: 'Invalid Token Format'
             })
         }
-        const decode = await jwt.verify(token, SECRET_KEY);
+        const decode = jwt.verify(token, SECRET_KEY);
         req.user = decode
+        console.log(decode)
         next()
     } catch (error) {
         if (error instanceof jwt.TokenExpiredError) {

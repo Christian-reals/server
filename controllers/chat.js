@@ -105,7 +105,7 @@ const createChat = async (req, res) => {
     console.log(recieverid,userid)
     if (recieverid && userid) {
       const chat = new Chatdb({
-        members:[recieverid,userid]
+        members:[mongoose.Types.ObjectId(recieverid),mongoose.Types.ObjectId(userid)]
       });
       chat.members.forEach(async (id) => {
         console.log(id)
@@ -129,6 +129,16 @@ const createChat = async (req, res) => {
 const getAllChats = async (req, res) => {
   try {
     const chats = await Chatdb.find({}).lean();
+    console.log(chats);
+    res.status(200).json({data:chats,msg: 'request sucessful'});
+  } catch (error) {
+    res.status(404).json({ msg: "failed", error: error });
+  }
+};
+const getUserChats = async (req, res) => {
+  console.log(req.param)
+  try {
+    const chats = await Chatdb.findById()
     console.log(chats);
     res.status(200).json({data:chats,msg: 'request sucessful'});
   } catch (error) {
@@ -216,8 +226,10 @@ const deleteMessage = async (req, res) => {
   const { id } = req.params;
   try {
     const deletedmessage = await Messagesdb.findByIdAndDelete(id);
-    res.status(202).json({ msg: "delete failed", error: error });
-  } catch (error) {}
+    res.status(202).json({ msg: "chat deleted", error: error });
+  } catch (error) {
+    res.status(401).json({ msg: "delete failed", error: error });
+  }
 };
 
 module.exports = {
@@ -230,4 +242,5 @@ module.exports = {
   deleteMessage,
   getChat,
   createChat,
+  getUserChats
 };

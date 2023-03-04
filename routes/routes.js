@@ -17,6 +17,7 @@ const {
   getChat,
   replyMessage,
   createChat,
+  getUserChats,
 } = require("../controllers/chat");
 //auth middleware
 const auth = require('../middleware/jwt').authMiddleware
@@ -47,7 +48,8 @@ route.delete("/event/:id", deleteEvent);
 
 //chats and message
 route.post("/chat/message",auth, createMessage);
-route.get("/chat",auth, getAllChats);
+route.get("/chats/:id",auth, getUserChats);
+route.get("/chats",auth, getAllChats);
 route.post('/chat',auth,createChat)
 route.get("/chat/:id",auth, getChat);
 route.put("/chat/message/:id",auth, updateMessage);
