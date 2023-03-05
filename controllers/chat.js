@@ -28,7 +28,6 @@ const upload = multer({
   },
 }).single("file");
 
-
 //the create message controller
 
 const createMessage = async (req, res) => {
@@ -39,12 +38,12 @@ const createMessage = async (req, res) => {
       if (req.file) {
         //if file is attched to request
 
-        const { chatid,from,to,...others } = req.body;
+        const { chatid, from, to, ...others } = req.body;
         const originalname = req.file.originalname;
         const message = new Messagesdb({
           ...others,
-          from:mongoose.Types.ObjectId(from),
-          to:mongoose.Types.ObjectId(to),
+          from: mongoose.Types.ObjectId(from),
+          to: mongoose.Types.ObjectId(to),
           image: {
             data: fs.readFileSync(
               path.join(dirname + "/uploads/" + req.file.filename)
@@ -54,31 +53,30 @@ const createMessage = async (req, res) => {
           fileName: originalname,
           fileUrl: path.join(dirname + "/uploads/" + req.file.filename),
         });
-        console.log(message)
+        console.log(message);
         try {
           await message.save(message);
-          const chat = await Chatdb.find({_id:chatid})
-          if (chat.length>0) {
+          const chat = await Chatdb.find({ _id: chatid });
+          if (chat.length > 0) {
             await Chatdb.findOneAndUpdate(
               { _id: chatid },
               { $push: { messages: message._id } }
             ).exec();
             res.status(201).json({ msg: "message created successfully" });
-          }
-          else{
-            res.status(401).json({msg:"chat not found"})
+          } else {
+            res.status(401).json({ msg: "chat not found" });
           }
         } catch (error) {
           res.json({ msg: "message creation is not successful", error: error });
         }
       } else {
         //if file is not attached to the request
-        const { chatid,from,to,...others } = req.body;
-        console.log(req.body,'isnotfile',others)
+        const { chatid, from, to, ...others } = req.body;
+        console.log(req.body, "isnotfile", others);
         const message = new Messagesdb({
           others,
-          from:mongoose.Types.ObjectId(from),
-          to:mongoose.Types.ObjectId(to),
+          from: mongoose.Types.ObjectId(from),
+          to: mongoose.Types.ObjectId(to),
         });
         try {
           await message.save(message);
@@ -102,13 +100,16 @@ const createMessage = async (req, res) => {
 const createChat = async (req, res) => {
   try {
     const { recieverid, userid } = req.body;
-    console.log(recieverid,userid)
+    console.log(recieverid, userid);
     if (recieverid && userid) {
       const chat = new Chatdb({
-        members:[mongoose.Types.ObjectId(recieverid),mongoose.Types.ObjectId(userid)]
+        members: [
+          mongoose.Types.ObjectId(recieverid),
+          mongoose.Types.ObjectId(userid),
+        ],
       });
       chat.members.forEach(async (id) => {
-        console.log(id)
+        console.log(id);
         await Userdb.findOneAndUpdate(
           { _id: id },
           { $push: { chats: mongoose.Types.ObjectId(chat._id) } }
@@ -119,10 +120,9 @@ const createChat = async (req, res) => {
     } else {
       res.status(401).json({ msg: "chat not created  no Id" });
     }
-
   } catch (error) {
-    console.log(error)
-    res.status(400).json({ msg: "chat creation failed", error:error });
+    console.log(error);
+    res.status(400).json({ msg: "chat creation failed", error: error });
   }
 };
 // get all chats
@@ -130,30 +130,29 @@ const getAllChats = async (req, res) => {
   try {
     const chats = await Chatdb.find({}).lean();
     console.log(chats);
-    res.status(200).json({data:chats,msg: 'request sucessful'});
+    res.status(200).json({ data: chats, msg: "request sucessful" });
   } catch (error) {
     res.status(404).json({ msg: "failed", error: error });
   }
 };
 const getUserChats = async (req, res) => {
-  console.log(req.param)
+  const { id } = req.params;
   try {
-    const chats = await Chatdb.findById()
-    console.log(chats);
-    res.status(200).json({data:chats,msg: 'request sucessful'});
+    const user = await Userdb.findOne({ registrationDataId: id }).populate('chats').exec();
+    
+    res.status(200).json({ data: user.chats, msg: "request sucessful" });
   } catch (error) {
     res.status(404).json({ msg: "failed", error: error });
   }
 };
 //get messages in a chat
 const getChat = async (req, res) => {
-  const { id } = req.params;
   try {
-    const chat = await Chatdb.findById({ _id: id }).populate('messages').exec();
+    const chat = await Chatdb.findById({ _id: id }).populate("messages").exec();
     const messages = chat.messages;
     res.status(200).json(messages);
   } catch (error) {
-    res.status(404).json({ msg: "failed, unable to get chat", error:error });
+    res.status(404).json({ msg: "failed, unable to get chat", error: error });
   }
 };
 
@@ -173,32 +172,39 @@ const updateMessage = async (req, res) => {
 };
 const reactToMessage = async (req, res) => {
   const { id } = req.params;
-  const { reaction,from } = req.body;
-  console.log(from)
+  const { reaction, from } = req.body;
+  console.log(from);
   try {
     const message = await Messagesdb.findOneAndUpdate(
       { _id: id },
-      { $push: { reactions: {reaction:reaction,from:mongoose.Types.ObjectId(from)} } }
+      {
+        $push: {
+          reactions: {
+            reaction: reaction,
+            from: mongoose.Types.ObjectId(from),
+          },
+        },
+      }
     ).exec();
-    res.status(201).send('reacted to message');
+    res.status(201).send("reacted to message");
   } catch (error) {
-    res.status(401).json({msg:'unsucessful reply',error:error});
+    res.status(401).json({ msg: "unsucessful reply", error: error });
   }
 };
 const replyMessage = async (req, res) => {
   //id of the chat
   const { id } = req.params;
-  console.log(id)
-  const chatid = mongoose.Types.ObjectId(id)
+  console.log(id);
+  const chatid = mongoose.Types.ObjectId(id);
   //id of the chat taht is being replied
-  const { referenceid,from,to,...others } = req.body;
+  const { referenceid, from, to, ...others } = req.body;
   try {
     const message = new Messagesdb({
       ...others,
-      from:mongoose.Types.ObjectId(from),
-      to:mongoose.Types.ObjectId(to),
-      refrenceChat:mongoose.Types.ObjectId(referenceid),
-      isReply:true
+      from: mongoose.Types.ObjectId(from),
+      to: mongoose.Types.ObjectId(to),
+      refrenceChat: mongoose.Types.ObjectId(referenceid),
+      isReply: true,
       //add refrenced chat to the reply
     });
     try {
@@ -242,5 +248,5 @@ module.exports = {
   deleteMessage,
   getChat,
   createChat,
-  getUserChats
+  getUserChats,
 };

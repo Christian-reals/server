@@ -100,7 +100,9 @@ const login = async (req, res) => {
         const userValid = await bcrypt.compare(password, user.password);
         if (userValid) {
           const id = mongoose.Types.ObjectId(user._id);
+          console.log(id)
           const username = user.userName;
+          console.log(username)
           const token = jwt.sign({ id, username }, process.env.SECRET_KEY, {
             expiresIn: "30d",
           });
