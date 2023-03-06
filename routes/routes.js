@@ -47,8 +47,8 @@ route.delete("/event/:id", deleteEvent);
 
 
 //chats and message
-route.post("/chat/message",auth, createMessage);
-route.get("/chats/:id",auth, getUserChats);
+route.post("/chat/message", createMessage);
+route.get("/chats/:id", getUserChats);
 route.get("/chats",auth, getAllChats);
 route.post('/chat',auth,createChat)
 route.get("/chat/:id",auth, getChat);

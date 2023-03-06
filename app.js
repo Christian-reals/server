@@ -37,8 +37,8 @@ app.use('/',route)
 const botname = 'Crbot'
 
 
-io.on('connection',(socket)=>{
-  console.log('connected')
+io.of('/chat/message').on('connection',(socket)=>{
+  console.log('connected to socket')
   socket.on('joinRoom',({userid,roomid})=>{
     socket.join(roomid)
     socket.emit('info',{userid,roomid})
