@@ -23,6 +23,9 @@ const message = new mongoose.Schema({
     fileUrl:{
         type:String
     },
+    fileType:{
+        type:String
+    },
     reactions:[{
         reaction:String,
         from:{type:mongoose.Schema.Types.ObjectId}
@@ -39,7 +42,7 @@ const message = new mongoose.Schema({
         type:mongoose.Schema.Types.ObjectId,
         ref:'Messages'
     },
-})
+},{timestamps:true})
 
 
 const Messagesdb = mongoose.model("Messages",message)

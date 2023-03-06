@@ -40,7 +40,7 @@ const createMessage = async (req, res) => {
 
         const { chatid, from, to, ...others } = req.body;
         const originalname = req.file.originalname;
-        console.log(originalname)
+        console.log(originalname);
         const message = new Messagesdb({
           ...others,
           from: mongoose.Types.ObjectId(from),
@@ -142,30 +142,41 @@ const getUserChats = async (req, res) => {
       .populate("chats")
       .exec();
     const { chats } = user;
-    if (chats.length>0) {
+    if (chats.length > 0) {
       //get reciever
-      chats.forEach( async(chat)=>{
+      chats.forEach(async (chat) => {
         const recieverId = chat.members.filter((member) => {
           return member.toString() != user._id;
         });
         if (recieverId) {
-          const reciever = await Userdb.findById(recieverId).populate('registrationDataId').exec()
-          const {userName} = reciever.registrationDataId
-          console.log(userName)
-          // get last message 
+          const reciever = await Userdb.findById(recieverId)
+            .populate("registrationDataId")
+            .exec();
+          const { userName, avatar } = reciever.registrationDataId;
+          // get last message
           try {
-            const chatMessage = await Chatdb.findById({ _id: chat._id }).populate("messages").exec();
+            const chatMessage = await Chatdb.findById({ _id: chat._id })
+              .populate("messages")
+              .exec();
             const messages = chatMessage.messages;
-            res.status(200).json({ data: {avatar:userName,messages:messages[messages.length-1],chatId:chat._id}, msg: "request sucessful" });
+            res
+              .status(200)
+              .json({
+                data: {
+                  avatar: avatar,
+                  username: userName,
+                  messages: messages[messages.length - 1],
+                  chatId: chat._id,
+                },
+                msg: "request sucessful",
+              });
           } catch (error) {
-            res.status(404).json({ msg: "failed, unable to get chat", error: error });
+            res
+              .status(404)
+              .json({ msg: "failed, unable to get chat", error: error });
           }
-         
         }
-      })
-
-
-
+      });
     } else {
       res.status(404).json({ data: null, msg: "no chat found" });
     }
@@ -175,18 +186,16 @@ const getUserChats = async (req, res) => {
 };
 //get messages in a chat
 const getMessages = async (req, res) => {
-  const {id} =  req.params
-  console.log(id)
+  const { id } = req.params;
+  console.log(id);
   try {
     const chat = await Chatdb.findById({ _id: id }).populate("messages").exec();
     const messages = chat.messages;
     if (messages) {
       res.status(200).json(messages);
     } else {
-      res.status(400).json({msg:'no messges'});
-
+      res.status(400).json({ msg: "no messges" });
     }
-    
   } catch (error) {
     res.status(404).json({ msg: "failed, unable to get chat", error: error });
   }
