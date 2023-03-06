@@ -18,6 +18,7 @@ const {
   replyMessage,
   createChat,
   getUserChats,
+  getMessages,
 } = require("../controllers/chat");
 //auth middleware
 const auth = require('../middleware/jwt').authMiddleware
@@ -51,7 +52,7 @@ route.post("/chat/message", createMessage);
 route.get("/chats/:id", getUserChats);
 route.get("/chats",auth, getAllChats);
 route.post('/chat',auth,createChat)
-route.get("/chat/:id",auth, getChat);
+route.get("/chat/:id", getMessages);
 route.put("/chat/message/:id",auth, updateMessage);
 route.post("/chat/message/react/:id",auth, reactToMessage);
 route.post("/chat/message/reply/:id",auth, replyMessage);
