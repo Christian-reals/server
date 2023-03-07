@@ -38,8 +38,10 @@ const createMessage = async (req, res) => {
       if (req.file) {
         //if file is attched to request
 
-        const { chatid, from, to, ...others } = req.body;
+        const { chatId, from, to, ...others } = req.body;
+        console.log(chatId,from,to,others,req.file)
         const originalname = req.file.originalname;
+        const fileType = req.file.originalname.split('.').pop();
         console.log(originalname);
         const message = new Messagesdb({
           ...others,
@@ -50,16 +52,18 @@ const createMessage = async (req, res) => {
               path.join(dirname + "/tmp/uploads/" + req.file.filename)
             ),
           },
+          fileType,
           fileName: originalname,
           fileUrl: path.join(dirname + "/tmp/uploads/" + req.file.filename),
         });
         console.log(message);
         try {
           await message.save(message);
-          const chat = await Chatdb.find({ _id: chatid });
-          if (chat.length > 0) {
+          const chat = await Chatdb.find({ _id: chatId });
+          console.log(chat)
+          if (chat.length>0) {
             await Chatdb.findOneAndUpdate(
-              { _id: chatid },
+              { _id: chatId },
               { $push: { messages: message._id } }
             ).exec();
             res.status(201).json({ msg: "message created successfully" });
@@ -71,8 +75,8 @@ const createMessage = async (req, res) => {
         }
       } else {
         //if file is not attached to the request
-        const { chatid, from, to, ...others } = req.body;
-        console.log(req.body, "isnotfile", others);
+        const { chatId, from, to, ...others } = req.body;
+        // console.log(req.body, "isnotfile", others);
         const message = new Messagesdb({
           ...others,
           from: mongoose.Types.ObjectId(from),
@@ -81,7 +85,7 @@ const createMessage = async (req, res) => {
         try {
           await message.save(message);
           await Chatdb.findOneAndUpdate(
-            { _id: chatid },
+            { _id: chatId },
             { $push: { messages: message._id } }
           ).exec();
           res.status(201).json({ msg: "text message created successfully" });
@@ -138,7 +142,7 @@ const getAllChats = async (req, res) => {
 const getUserChats = async (req, res) => {
   const { id } = req.params;
   try {
-    const user = await Userdb.findOne({ registrationDataId: id })
+    const user = await Userdb.findOne({ _id: id })
       .populate("chats")
       .exec();
     const { chats } = user;
@@ -164,6 +168,7 @@ const getUserChats = async (req, res) => {
               .json({
                 data: {
                   avatar: avatar,
+                  recieverId:recieverId[0],
                   username: userName,
                   messages: messages[messages.length - 1],
                   chatId: chat._id,

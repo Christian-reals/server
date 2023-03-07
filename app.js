@@ -15,8 +15,9 @@ const cors = require('cors')
 const server= http.createServer(app)
 const io = socket(server,{
   cors: {
-    origin: `${process.env.PORT}`,
+    origin: `*`,
     credentials: true,
+    methods: ['GET', 'POST'],
     allowedHeaders: ['Authorization'],
   },
 })
@@ -37,14 +38,16 @@ app.use('/',route)
 const botname = 'Crbot'
 
 
-io.of('/chat/message').on('connection',(socket)=>{
-  console.log('connected to socket')
+io.on('connection',(socket)=>{
+  // socket.emit('connect',formatmsg(botname,' welcome to chatcord'))
+  console.log('connected to socket',Date().toLocaleString())
   socket.on('joinRoom',({userid,roomid})=>{
     socket.join(roomid)
     socket.emit('info',{userid,roomid})
-    socket.emit('message', formatmsg(botname,' welcome to chatcord'))
-    socket.broadcast.to(roomid).emit ('message', formatmsg(botname,`${userid} has joined the chat`))
+    socket.emit('info', formatmsg(botname,' welcome to chatcord'))
+    socket.broadcast.to(roomid).emit ('info', formatmsg(botname,`${userid} has joined the chat`))
     socket.on('chatMessage',message=>{
+      console.log(message)
         io.to(roomid).emit('message',formatmsg(userid,message))
     })
 })

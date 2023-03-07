@@ -99,10 +99,12 @@ const login = async (req, res) => {
         // console.log(user);
         const userValid = await bcrypt.compare(password, user.password);
         if (userValid) {
-          const id = mongoose.Types.ObjectId(user._id);
-          console.log(id)
+          const userProfile = await Userdb.findOne({registrationDataId:user._id}) ;
+          // console.log(userProfile,user._id)
+          const id = userProfile._id
+          // console.log(id)
           const username = user.userName;
-          console.log(username)
+          // console.log(username)
           const token = jwt.sign({ id, username }, process.env.SECRET_KEY, {
             expiresIn: "30d",
           });
