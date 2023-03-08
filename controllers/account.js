@@ -1,4 +1,4 @@
-
+const bcrypt = require("bcrypt");
 const {Userdb,registrationDb} =require('../models/userdb')
 
 const getAccount = async (req, res) => {
