@@ -3,10 +3,8 @@ const bcrypt = require("bcrypt");
 const { Userdb, registrationDb } = require("../models/userdb");
 const { genSalt } = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const { default: mongoose } = require("mongoose");
 const sendVerificationEmail = require("../utils/mailer");
-const { verifyToken } = require("../middleware/jwt");
-const { redirect } = require("express/lib/response");
+
 
 const register = async (req, res) => {
   console.log("register request");

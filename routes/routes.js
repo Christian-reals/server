@@ -6,6 +6,7 @@ const {
   deleteEvent,
   getEvent,
 } = require("../controllers/events");
+const {getAccount,deleteAccount} =require('../controllers/account')
 const { login, register, verifyMail,createProfile } = require("../controllers/auth");
 const {
   createMessage,
@@ -14,7 +15,6 @@ const {
   deleteMessage,
   deleteChat,
   reactToMessage,
-  getChat,
   replyMessage,
   createChat,
   getUserChats,
@@ -30,6 +30,11 @@ const route = express.Router();
 route.get('/',(req,res)=>{
   res.status(200).json({message: 'REquest sucessfull'})
 })
+
+
+//acount
+route.post("/deleteAccount",deleteAccount );
+route.post("/getAccount", getAccount);
 
 
 //auth
@@ -58,5 +63,7 @@ route.post("/chat/message/react/:id",auth, reactToMessage);
 route.post("/chat/message/reply/:id",auth, replyMessage);
 route.delete("/chat/message/:id",auth, deleteMessage);
 route.delete("/chat/:id",auth, deleteChat);
+
+
 
 module.exports = route;
