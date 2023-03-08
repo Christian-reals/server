@@ -42,7 +42,7 @@ route.post("/register", register);
 route.post("/login", login);
 route.post("/profile", createProfile);
 route.get('/verify',verify)
-route.put('/changePassword',changePassword)
+route.put('/changePassword',auth,changePassword)
 
 
 //Events
