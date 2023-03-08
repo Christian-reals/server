@@ -58,7 +58,7 @@ const register = async (req, res) => {
 };
 
 const verifyMail = async (req, res) => {
-  res.redirect("http://127.0.0.1:5173/profile");
+  res.redirect("https://christianreal.onrender.com/profile");
 };
 
 const createProfile = async (req, res) => {
@@ -132,10 +132,12 @@ const login = async (req, res) => {
   }
 };
 
-const logOut = (req, res) => {
-  const { token } = req.header;
+const forgotPassword = (req, res) => {
+  
+};
+const changePassword = (req, res) => {
+  
 };
 
-function resetPassword(params) {}
 
 module.exports = { login, register, createProfile, verifyMail };

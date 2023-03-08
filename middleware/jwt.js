@@ -16,7 +16,7 @@ async function   verifyToken (req,res,next) {
         await jwt.verify(token, SECRET_KEY);
         const payload=await jwt.decode(token)
         await registrationDb.findOneAndUpdate({_id:payload.id},{email_verified:true},{new:true})
-        res.redirect(`http://127.0.0.1:5173/profile/?id=${payload.id}`)
+        res.redirect(`https://christianreal.onrender.com/profile/?id=${payload.id}`)
         next()
     } catch (error) {
         if (error instanceof jwt.TokenExpiredError) {

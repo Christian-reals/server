@@ -3,23 +3,30 @@ const mongoose = require('mongoose')
 const discussion = new mongoose.Schema({
     topic:{
         type:String,
-        required:true,
+        required:['topic cannot be empty'],
     },
     description:{
         type:String,
-        required:true,
+        required:['discussion must have a  description'],
     },
     author:{
         type:String,
-        required:true,
+        required:['discussion must have an author'],
+    },
+    authorRole:{
+        type:String,
+        required:['authorRole can not be empty'],
+    },
+    authorImgUrl:{
+        type:String
     },
     participants:[{
         type: mongoose.Schema.Types.ObjectId,
         ref:'users'
     }],
-    opinions:[{
+    comments:[{
         type: mongoose.Schema.Types.ObjectId,
-        ref:'Opinions'
+        ref:'Comments'
     }],
 },
 {
