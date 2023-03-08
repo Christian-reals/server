@@ -130,12 +130,37 @@ const login = async (req, res) => {
   }
 };
 
-const forgotPassword = (req, res) => {
+const forgotPassword = async (req, res) => {
   
 };
-const changePassword = (req, res) => {
-  
+const changePassword = async (req, res) => {
+  const {userId, oldPassword,newPassword} = req.body
+
+  try {
+    const account = await Userdb.findById(userId)
+    const {registrationDataId} = account
+    const user = await registrationDb.findById(registrationDataId)
+    if (user) {
+      // console.log(user);
+      const userValid = await bcrypt.compare(oldPassword, user.password);
+      if (userValid) {
+        const salt = await genSalt();
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+        await registrationDb.findByIdAndUpdate(registrationDataId,{password:hashedPassword})
+        return res
+          .status(201)
+          .json({
+            msg: "Password changed sucessfully",
+          });
+      } else {
+        return res.status(400).json({ msg: "old password incorrect" });
+      }
+    }
+    res.status(400).json({ msg: "user not found" });
+  } catch (error) {
+    res.status(400).json({msg:'error: could not change password'},error)
+  }
 };
 
 
-module.exports = { login, register, createProfile, verifyMail };
+module.exports = { login, register, createProfile, verifyMail,changePassword };
