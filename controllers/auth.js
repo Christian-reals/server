@@ -158,7 +158,7 @@ const changePassword = async (req, res) => {
     }
     res.status(400).json({ msg: "user not found" });
   } catch (error) {
-    res.status(400).json({msg:'error: could not change password'},error)
+    res.status(400).json({msg:'error: could not change password',error})
   }
 };
 

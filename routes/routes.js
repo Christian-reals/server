@@ -33,8 +33,8 @@ route.get('/',(req,res)=>{
 
 
 //acount
-route.post("/deleteAccount",deleteAccount );
-route.post("/getAccount", getAccount);
+route.post("/deleteAccount",auth,deleteAccount );
+route.post("/getAccount",auth, getAccount);
 
 
 //auth
