@@ -162,5 +162,9 @@ const changePassword = async (req, res) => {
   }
 };
 
+const verifyToken = async(req,res)=>{
+  res.status(200).json({msg:'token verified'})
+}
+
 
 module.exports = { login, register, createProfile, verifyMail,changePassword };
