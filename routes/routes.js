@@ -31,7 +31,6 @@ route.get('/',(req,res)=>{
   res.status(200).json({message: 'REquest sucessfull'})
 })
 
-``
 //acount
 route.post("/deleteAccount",auth,deleteAccount );
 route.post("/getAccount",auth, getAccount);
@@ -43,7 +42,7 @@ route.post("/login", login);
 route.post("/profile", createProfile);
 route.get('/verify',verify)
 route.put('/changePassword',changePassword)
-route.get('/verifyToken',auth)
+// route.get('/verifyToken',auth)
 
 
 //Events
