@@ -167,4 +167,4 @@ const verifyToken = async(req,res)=>{
 }
 
 
-module.exports = { login, register, createProfile, verifyMail,changePassword };
+module.exports = { login, register, verifyToken, createProfile, verifyMail,changePassword };

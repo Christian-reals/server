@@ -7,7 +7,7 @@ const {
   getEvent,
 } = require("../controllers/events");
 const {getAccount,deleteAccount} =require('../controllers/account')
-const { login, register, verifyMail,createProfile, changePassword } = require("../controllers/auth");
+const { login, register, verifyMail,createProfile, changePassword, verifyToken } = require("../controllers/auth");
 const {
   createMessage,
   getAllChats,
@@ -42,7 +42,7 @@ route.post("/login", login);
 route.post("/profile", createProfile);
 route.get('/verify',verify)
 route.put('/changePassword',changePassword)
-// route.get('/verifyToken',auth)
+route.get('/verifyToken',auth,verifyToken)
 
 
 //Events
