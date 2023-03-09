@@ -43,6 +43,7 @@ route.post("/login", login);
 route.post("/profile", createProfile);
 route.get('/verify',verify)
 route.put('/changePassword',changePassword)
+route.post('verifyToken',auth)
 
 
 //Events
