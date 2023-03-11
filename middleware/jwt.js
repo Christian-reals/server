@@ -8,7 +8,7 @@ async function   verifyToken (req,res,next) {
     try {
         if (!token) {
             return res.status(401).json({
-                msg: 'Invalid Token Format or no token found'
+                message: 'Invalid Token Format or no token found'
             })
         }
         console.log(SECRET_KEY)
@@ -41,7 +41,6 @@ async function   verifyToken (req,res,next) {
 
 const authMiddleware = async (req, res, next) => {
     const authorization = req.headers.authorization;
-    console.log(authorization)
     if (!authorization) {
         return res.status(401).json({
             message: 'No Authorization Header'

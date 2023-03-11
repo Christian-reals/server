@@ -17,6 +17,10 @@ const eventDb = new mongoose.Schema({
         required:true,
         // default:Date.now()
     },
+    like:{
+        type:Number,
+        default:0
+    },
     imageUrl:{type:String},
     venue:{
         type:String,
@@ -26,7 +30,7 @@ const eventDb = new mongoose.Schema({
         type:mongoose.Schema.Types.ObjectId,
         ref:'Users',
     }]
-})
+},{timestamps:true})
 
 const EventDb = mongoose.model('Events',eventDb)
 

@@ -34,6 +34,6 @@ const discussion = new mongoose.Schema({
 }
 )
 
-const Discusssiondb= mongoose.model('Discussions',discussion)
+const Discussiondb= mongoose.model('Discussions',discussion)
 
-module.exports = Discusssiondb
+module.exports = Discussiondb

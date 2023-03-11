@@ -79,11 +79,16 @@ const getEvent = async (req, res) => {
 };
 
 const getUserEvents = async (req, res) => {
-  const { userId } = req.body;
+  const { userId } = req.params;
   try {
-    const user = await Userdb.findOne({ _id: userId });
+    const user = await Userdb.findOne({ _id: userId }).populate('events').exec();
     const userEvents = user.events;
-    res.status(201).json({ data: userEvents });
+    if (userEvents>0) {
+        res.status(201).json({ data: userEvents,msg:'user events found' });
+    } else {
+        res.status(400).json({msg:'user has no events' });
+    }
+    
   } catch (error) {
     res.status(400).json({ msg: "could not fetch event", error });
   }
@@ -114,18 +119,34 @@ const likeEvents = async (req, res) => {
       { _id: id },
       { $inc: { likes: 1 } }
     ).exec();
+    if (likedEvent) {
+    res.status(200).json({msg:'request sucessfull',});
+      
+    }
   } catch (error) {
-    res.send(error);
+    res.status(400).json({msg:'request not sucessfull',error});
   }
 };
 const registerEvents = async (req, res) => {
   const { id } = req.params;
-  const { userid } = req.body;
+  const { userId } = req.body;
+  console.log(id)
   try {
-    await EventDb.findOneAndUpdate(
+   const event =  await EventDb.findOneAndUpdate(
       { _id: id },
-      { $push: { participants: userid } }
+      { $push: { participants: userId } }
     ).exec();
+    if (event) {
+      await Userdb.findOneAndUpdate(
+        { _id: userId },
+        { $push: { events:id } }
+      ).exec();
+    res.status(200).json({msg:'event registration sucessful'})
+    } else {
+      res.status(201).json({msg:'event was not found'});
+      
+    }
+
   } catch (error) {
     res.status(400).json({msg:'event registration failed',error});
   }

@@ -3,9 +3,27 @@ const {Userdb,registrationDb} =require('../models/userdb')
 
 const getAccount = async (req, res) => {
   const { userId } = req.body;
-  const user = await Userdb.findById(userId)
+  try {
+    const user = await Userdb.findById(userId)
     .populate("registrationDataId")
     .exec();
+    res.status(200).json({msg:'success',data:user})
+  } catch (error) {
+    res.status(400).json({msg:'unsucessfull'})
+  }
+
+};
+
+const getAllAccounts = async (req, res) => {
+  try {
+      const users = await Userdb.find({isBanned:false,isSuspended:false})
+    .populate("registrationDataId")
+    .exec();
+    res.status(200).json({msg:'success',data:users})
+  } catch (error) {
+    res.status(400).json({msg:'unsucessfull: could not users'})
+  }
+
 };
 
 const deleteAccount = async (req, res) => {

@@ -35,6 +35,10 @@ var registerSchema = new mongoose.Schema({
         type:String,
         required:[true,`state cannot be empty`],
     },
+    country:{
+        type:String,
+        required:[true,`country cannot be empty`],
+    },
     userName:{
         type:String,
         required:[true,`username cannot be empty`],

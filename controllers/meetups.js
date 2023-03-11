@@ -33,7 +33,7 @@ const createMeetup = async (req, res) => {
       } else {
         const { title, category, venue, description, date } = req.body;
         console.log(dirname);
-        const event = new MeetupDb({
+        const meetup = new MeetupDb({
           title: title,
           category: category,
           venue: venue,
@@ -46,10 +46,10 @@ const createMeetup = async (req, res) => {
           imageUrl: path.join(dirname + "tmp/uploads/" + req.file.filename),
         });
         try {
-          await event.save(event);
-          res.status(201).json({ msg: "event created successfully" });
+          await meetup.save(meetup);
+          res.status(201).json({ msg: "meetup created successfully" });
         } catch (error) {
-          res.json({ msg: "event creation is not successful", error: error });
+          res.json({ msg: "meetup creation is not successful", error: error });
         }
       }
     } else {
@@ -60,9 +60,9 @@ const createMeetup = async (req, res) => {
 
 const getAllMeetups = async (req, res) => {
   try {
-    const events = await MeetupDb.find({}).lean();
+    const meetups = await MeetupDb.find({}).lean();
 
-    res.status(200).json(events);
+    res.status(200).json(meetups);
   } catch (error) {
     res.status(404).json({ msg: "failed: unable to process request", error });
   }
@@ -70,8 +70,8 @@ const getAllMeetups = async (req, res) => {
 const getMeetup = async (req, res) => {
   const { id } = req.params;
   try {
-    const Event = await MeetupDb.findById({ _id: id });
-    res.status(200).json(Event);
+    const meetup = await MeetupDb.findById({ _id: id });
+    res.status(200).json(meetup);
   } catch (error) {
     res.status(404).json({ msg: "failed", error });
   }
@@ -80,18 +80,20 @@ const getMeetup = async (req, res) => {
 const getUserMeetups = async (req, res) => {
   const { userId } = req.body;
   try {
-    const user = await Userdb.findOne({ _id: userId });
-    const userEvents = user.events;
-    res.status(201).json({ data: userEvents });
+    const user = await Userdb.findOne({ _id: userId })
+      .populate("meetups")
+      .exec();
+    const userMeetups = user.meetups;
+    res.status(201).json({ data: userMeetups });
   } catch (error) {
-    res.status(400).json({ msg: "could not fetch event", error });
+    res.status(400).json({ msg: "could not fetch meetup", error });
   }
 };
 
 const updateMeetup = async (req, res) => {
   const { id } = req.params;
   try {
-    const updatedEvent = await MeetupDb.findByIdAndUpdate(id, req.body);
+    const updatedmeetup = await MeetupDb.findByIdAndUpdate(id, req.body);
   } catch (error) {
     res.send(error);
   }
@@ -100,16 +102,16 @@ const updateMeetup = async (req, res) => {
 const deleteMeetup = (req, res) => {
   const { id } = req.params;
   try {
-    const deletedEvent = MeetupDb.findByIdAndDelete(id);
+    const deletedmeetup = MeetupDb.findByIdAndDelete(id);
   } catch (error) {
-    res.status(422).json({ msg: "unable to delete event", error });
+    res.status(422).json({ msg: "unable to delete meetup", error });
   }
 };
 
 const likeMeetups = async (req, res) => {
   const { id } = req.params;
   try {
-    const likedEvent = await MeetupDb.findOneAndUpdate(
+    const likedMeetup = await MeetupDb.findOneAndUpdate(
       { _id: id },
       { $inc: { likes: 1 } }
     ).exec();
@@ -137,5 +139,12 @@ const registerMeetups = async (req, res) => {
 };
 
 module.exports = {
-
+  getAllMeetups,
+  registerMeetups,
+  likeMeetups,
+  getMeetup,
+  createMeetup,
+  deleteMeetup,
+  updateMeetup,
+  getUserMeetups,
 };
