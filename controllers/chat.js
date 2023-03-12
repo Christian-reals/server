@@ -39,9 +39,9 @@ const createMessage = async (req, res) => {
         //if file is attched to request
 
         const { chatId, from, to, ...others } = req.body;
-        console.log(chatId,from,to,others,req.file)
+        console.log(chatId, from, to, others, req.file);
         const originalname = req.file.originalname;
-        const fileType = req.file.originalname.split('.').pop();
+        const fileType = req.file.originalname.split(".").pop();
         console.log(originalname);
         const message = new Messagesdb({
           ...others,
@@ -60,8 +60,8 @@ const createMessage = async (req, res) => {
         try {
           await message.save(message);
           const chat = await Chatdb.find({ _id: chatId });
-          console.log(chat)
-          if (chat.length>0) {
+          console.log(chat);
+          if (chat.length > 0) {
             await Chatdb.findOneAndUpdate(
               { _id: chatId },
               { $push: { messages: message._id } }
@@ -103,13 +103,13 @@ const createMessage = async (req, res) => {
 //start a new chat
 const createChat = async (req, res) => {
   try {
-    const { recieverid, userid } = req.body;
-    console.log(recieverid, userid);
-    if (recieverid && userid) {
+    const { recieverId, userId } = req.body;
+    console.log(recieverId, userId);
+    if (recieverId && userId) {
       const chat = new Chatdb({
         members: [
-          mongoose.Types.ObjectId(recieverid),
-          mongoose.Types.ObjectId(userid),
+          mongoose.Types.ObjectId(recieverId),
+          mongoose.Types.ObjectId(userId),
         ],
       });
       chat.members.forEach(async (id) => {
@@ -120,7 +120,9 @@ const createChat = async (req, res) => {
         ).exec();
       });
       await chat.save(chat);
-      res.status(201).json({ msg: "chat created successfully" });
+      res
+        .status(201)
+        .json({ msg: "chat created successfully", data: chat._id });
     } else {
       res.status(401).json({ msg: "chat not created  no Id" });
     }
@@ -142,45 +144,39 @@ const getAllChats = async (req, res) => {
 const getUserChats = async (req, res) => {
   const { id } = req.params;
   try {
-    const user = await Userdb.findOne({ _id: id })
-      .populate("chats")
-      .exec();
+    const user = await Userdb.findOne({ _id: id }).populate("chats").exec();
     const { chats } = user;
     if (chats.length > 0) {
-      //get reciever
-      chats.forEach(async (chat) => {
-        const recieverId = chat.members.filter((member) => {
-          return member.toString() != user._id;
-        });
-        if (recieverId) {
-          const reciever = await Userdb.findById(recieverId)
-            .populate("registrationDataId")
-            .exec();
-          const { userName, avatar } = reciever.registrationDataId;
-          // get last message
-          try {
-            const chatMessage = await Chatdb.findById({ _id: chat._id })
+      // Get receiver data for each chat
+      const chatData = await Promise.all(
+        chats.map(async (chat) => {
+          const recieverId = chat.members.filter((member) => {
+            return member.toString() != user._id;
+          });
+          if (recieverId) {
+            const reciever = await Userdb.findById(recieverId)
+              .populate("registrationDataId")
+              .exec();
+            const { userName } = reciever.registrationDataId;
+            const { avatar } = reciever;
+            // Get last message
+            const chatMessage = await Chatdb.findById(chat._id)
               .populate("messages")
               .exec();
             const messages = chatMessage.messages;
-            res
-              .status(200)
-              .json({
-                data: {
-                  avatar: avatar,
-                  recieverId:recieverId[0],
-                  username: userName,
-                  messages: messages[messages.length - 1],
-                  chatId: chat._id,
-                },
-                msg: "request sucessful",
-              });
-          } catch (error) {
-            res
-              .status(404)
-              .json({ msg: "failed, unable to get chat", error: error });
+            return {
+              avatar: avatar,
+              recieverId: recieverId[0],
+              username: userName,
+              messages: messages[messages.length - 1],
+              chatId: chat._id,
+            };
           }
-        }
+        })
+      );
+      res.status(200).json({
+        msg: "request successful",
+        data: chatData,
       });
     } else {
       res.status(404).json({ data: null, msg: "no chat found" });
@@ -189,6 +185,7 @@ const getUserChats = async (req, res) => {
     res.status(404).json({ msg: "failed", error: error });
   }
 };
+
 //get messages in a chat
 const getMessages = async (req, res) => {
   const { id } = req.params;
@@ -223,7 +220,6 @@ const updateMessage = async (req, res) => {
 const reactToMessage = async (req, res) => {
   const { id } = req.params;
   const { reaction, from } = req.body;
-  console.log(from);
   try {
     const message = await Messagesdb.findOneAndUpdate(
       { _id: id },

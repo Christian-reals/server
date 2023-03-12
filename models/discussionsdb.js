@@ -24,6 +24,10 @@ const discussion = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref:'users'
     }],
+    reactions:[{
+        reaction:String,
+        from:{type:mongoose.Schema.Types.ObjectId}
+    }],
     comments:[{
         type: mongoose.Schema.Types.ObjectId,
         ref:'Comments'

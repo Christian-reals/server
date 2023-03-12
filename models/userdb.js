@@ -428,8 +428,14 @@ var userschema = new mongoose.Schema({
         type:mongoose.Schema.Types.ObjectId,
         ref:'Chats',
     }],
-    isPremium:Boolean,
-    isBanned:Boolean,
+    isPremium:{
+        type:Boolean,
+        default:false
+    },
+    isBanned:{
+        type:Boolean,
+        default:false
+    },
     isSuspended:{
         banStart:{
             type: Date
@@ -438,6 +444,7 @@ var userschema = new mongoose.Schema({
             type: Date
         },
         type:Boolean,
+        default:false,
         reason:String
     },
     date: String

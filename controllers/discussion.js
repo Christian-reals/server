@@ -16,10 +16,17 @@ const createDiscussion = async (req, res) => {
 };
 const getDiscussion = async (req, res) => {
     const {id} = req.params
+    console.log(id)
     try {
       const discussion = await Discussiondb.findOne({_id:id})
-        .populate(["comments", "reactions", "partricipants"]);
-      res.status(200).json({ data: discussion, msg: "request sucessful" });
+        .populate('comments');
+        if (discussion) {
+             res.status(200).json({ data: discussion, msg: "request sucessful" });
+            
+        } else {
+            res.status(201).json({ msg: "request failed" });
+            
+        }
     } catch (error) {
       res.status(400).json({ msg: "failed", error: error });
     }
@@ -52,7 +59,6 @@ const updateDiscussion = async (req, res) => {
 const reactToDiscussion = async (req, res) => {
   const { id } = req.params;
   const { reaction, from } = req.body;
-  console.log(from);
   try {
     const discussion = await Discussiondb.findOneAndUpdate(
       { _id: id },
@@ -62,6 +68,7 @@ const reactToDiscussion = async (req, res) => {
             reaction: reaction,
             from: mongoose.Types.ObjectId(from),
           },
+          participants:from
         },
       }
     ).exec();
@@ -74,8 +81,6 @@ const replyDiscussion = async (req, res) => {
   //id of the chat
   const { id } = req.params;
   console.log(id);
-  const chatid = mongoose.Types.ObjectId(id);
-  //id of the chat taht is being replied
   const { userId, ...others } = req.body;
   try {
     //create comment
@@ -86,11 +91,10 @@ const replyDiscussion = async (req, res) => {
     try {
       //add the reply to the refrenced dicussion
       const discussion = await Discussiondb.findOneAndUpdate(
-        { _id: referenceid },
-        { $push: { comments: comment._id } }
+        { _id: id },
+        { $push: { comments: comment._id,participants:userId } }
       ).exec();
       await comment.save(comment);
-      await discussion.save(discussion);
       //save the reply as a discussion to the current chat
       res.status(201).json({ msg: "reply created successfully" });
     } catch (error) {

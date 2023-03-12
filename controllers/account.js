@@ -2,7 +2,7 @@ const bcrypt = require("bcrypt");
 const {Userdb,registrationDb} =require('../models/userdb')
 
 const getAccount = async (req, res) => {
-  const { userId } = req.body;
+  const { userId } = req.params;
   try {
     const user = await Userdb.findById(userId)
     .populate("registrationDataId")
@@ -16,7 +16,7 @@ const getAccount = async (req, res) => {
 
 const getAllAccounts = async (req, res) => {
   try {
-      const users = await Userdb.find({isBanned:false,isSuspended:false})
+      const users = await Userdb.find().lean()//$and : {[{isBanned:false},{isSuspended:false}]}
     .populate("registrationDataId")
     .exec();
     res.status(200).json({msg:'success',data:users})
@@ -65,5 +65,5 @@ const deleteAccount = async (req, res) => {
 
 const suspendAccount = async (req, res) => {};
 
-module.exports = {deleteAccount,getAccount}
+module.exports = {deleteAccount,getAccount, getAllAccounts}
 
