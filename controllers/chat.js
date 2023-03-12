@@ -147,6 +147,7 @@ const getUserChats = async (req, res) => {
     const user = await Userdb.findOne({ _id: id }).populate("chats").exec();
     const { chats } = user;
     if (chats.length > 0) {
+      console.log(chats)
       // Get receiver data for each chat
       const chatData = await Promise.all(
         chats.map(async (chat) => {
@@ -154,6 +155,7 @@ const getUserChats = async (req, res) => {
             return member.toString() != user._id;
           });
           if (recieverId) {
+            console.log(recieverId)
             const reciever = await Userdb.findById(recieverId)
               .populate("registrationDataId")
               .exec();
@@ -179,10 +181,10 @@ const getUserChats = async (req, res) => {
         data: chatData,
       });
     } else {
-      res.status(404).json({ data: null, msg: "no chat found" });
+      res.status(400).json({ data: null, msg: "no chat found" });
     }
   } catch (error) {
-    res.status(404).json({ msg: "failed", error: error });
+    res.status(400).json({ msg: "failed", error: error });
   }
 };
 

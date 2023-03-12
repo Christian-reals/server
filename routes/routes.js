@@ -72,7 +72,7 @@ route.get("/", (req, res) => {
 //acount
 route.post("/account/delete", auth, deleteAccount);
 route.post("/account/:userId", auth, getAccount);
-route.get("/accounts", getAllAccounts);
+route.get("/accounts", auth,getAllAccounts);
 
 //auth
 route.post("/register", register);
@@ -84,47 +84,47 @@ route.get("/verifyToken", auth, verifyToken);
 
 //Events
 route.post("/event", auth, createEvent);
-route.get("/event", getAllEvents);
+route.get("/event",auth, getAllEvents);
 route.get("/event/:id", auth, getEvent);
-route.get("/event/myEvents/:userId", getUserEvents);
-route.post("/event/register/:id", registerEvents);
-route.get("/event/like/:id", likeEvents);
+route.get("/event/myEvents/:userId", auth,getUserEvents);
+route.post("/event/register/:id",auth, registerEvents);
+route.get("/event/like/:id", auth,likeEvents);
 route.put("/event/:id", auth, updateEvent);
 route.delete("/event/:id", auth, deleteEvent);
 
 //Meetups
 route.post("/meetup", auth, createMeetup);
-route.get("/meetup", getAllMeetups);
+route.get("/meetup", auth,getAllMeetups);
 route.get("/meetup/:id", auth, getMeetup);
-route.get("/meetup/myMeetups/:userId", getUserMeetups);
-route.post("/meetup/register/:id", registerMeetups);
-route.get("/meetup/like/:id", likeMeetups);
+route.get("/meetup/myMeetups/:userId", auth,getUserMeetups);
+route.post("/meetup/register/:id", auth,registerMeetups);
+route.get("/meetup/like/:id", auth,likeMeetups);
 route.put("/meetup/:id", auth, updateMeetup);
 route.delete("/meetup/:id", auth, deleteMeetup);
 
 // discussion
-route.post("/discussion", createDiscussion);
-route.get("/discussion", getAllDiscussions);
-route.get("/discussion/:id", getDiscussion);
-route.post("/discussion/react/:id", reactToDiscussion);
-route.post("/discussion/reply/:id", replyDiscussion);
+route.post("/discussion",auth, createDiscussion);
+route.get("/discussion", auth,getAllDiscussions);
+route.get("/discussion/:id", auth,getDiscussion);
+route.post("/discussion/react/:id",auth, reactToDiscussion);
+route.post("/discussion/reply/:id",auth, replyDiscussion);
 route.put("/discussion/:id", auth, updateDiscussion);
 route.delete("/discussion/:id", auth, deleteDiscussion);
 
 //lovequest
-route.post("/lovequest", createLoveQuest);
-route.get("/lovequest", getAllLoveQuests);
-route.get("/lovequest/:id", getLoveQuest);
-route.get("/lovequest/like/:id",likeLoveQuest);
-route.get("/lovequest/dislike/:id",dislikeLoveQuest)
+route.post("/lovequest",auth, createLoveQuest);
+route.get("/lovequest",auth, getAllLoveQuests);
+route.get("/lovequest/:id",auth, getLoveQuest);
+route.get("/lovequest/like/:id",auth,likeLoveQuest);
+route.get("/lovequest/dislike/:id",auth,dislikeLoveQuest)
 route.put("/lovequest/:id", auth, updateLoveQuest);
 route.delete("/lovequest/:id", auth, deleteLoveQuest);
 
 //chats and message
 route.post("/chat/message", auth, createMessage);
-route.get("/chats/:id", getUserChats);
+route.get("/chats/:id", auth, getUserChats);
 route.get("/chats", auth, getAllChats);
-route.post("/chat",  createChat);
+route.post("/chat", auth, createChat);
 route.get("/chat/message/:id", auth, getMessages);
 route.put("/chat/message/:id", auth, updateMessage);
 route.post("/chat/message/react/:id", auth, reactToMessage);
