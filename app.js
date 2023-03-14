@@ -48,7 +48,7 @@ io.on('connection',(socket)=>{
     socket.broadcast.to(roomid).emit ('info', formatmsg(botname,`${userid} has joined the chat`))
     socket.on('chatMessage',message=>{
       console.log(message)
-        io.to(roomid).emit('message',formatmsg(userid,message))
+        io.to(roomid).broadcast.emit('message',formatmsg(userid,message))
     })
 })
   socket.on('disconnect',()=>{
