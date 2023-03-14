@@ -111,8 +111,9 @@ const createChat = async (req, res) => {
       const chatExists = user.friends.filter((friendId)=>{
         return friendId == recieverId
       })
-      if (chatExists) {
+      if (chatExists.length>0) {
         res.status(200).json({msg:"chat already exists"})
+        console.log(chatExists,'exists')
       } else {
         const chat = new Chatdb({
           members: [

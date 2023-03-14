@@ -124,7 +124,7 @@ route.delete("/lovequest/:id", auth, deleteLoveQuest);
 route.post("/chat/message", auth, createMessage);
 route.get("/chats/:id", auth, getUserChats);
 route.get("/chats", auth, getAllChats);
-route.post("/chat", auth, createChat);
+route.post("/chat", createChat);
 route.get("/chat/message/:id", auth, getMessages);
 route.put("/chat/message/:id", auth, updateMessage);
 route.post("/chat/message/react/:id", auth, reactToMessage);
