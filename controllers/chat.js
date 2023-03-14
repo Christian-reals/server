@@ -105,24 +105,41 @@ const createChat = async (req, res) => {
   try {
     const { recieverId, userId } = req.body;
     console.log(recieverId, userId);
+
     if (recieverId && userId) {
-      const chat = new Chatdb({
-        members: [
-          mongoose.Types.ObjectId(recieverId),
-          mongoose.Types.ObjectId(userId),
-        ],
-      });
-      chat.members.forEach(async (id) => {
-        console.log(id);
+      const user = await Userdb.findById(userId)
+      const chatExists = user.friends.filter((friendId)=>{
+        return friendId == recieverId
+      })
+      if (chatExists) {
+        res.status(300).json({msg:"chat already exists"})
+      } else {
+        const chat = new Chatdb({
+          members: [
+            mongoose.Types.ObjectId(recieverId),
+            mongoose.Types.ObjectId(userId),
+          ],
+        });
+        chat.members.forEach(async (id) => {
+          console.log(id);
+          await Userdb.findOneAndUpdate(
+            { _id: id },
+            { $push: { chats: mongoose.Types.ObjectId(chat._id) } }
+          ).exec();
+        });
         await Userdb.findOneAndUpdate(
-          { _id: id },
-          { $push: { chats: mongoose.Types.ObjectId(chat._id) } }
+          { _id: recieverId },
+          { $push: { friends: mongoose.Types.ObjectId(userId) } }
         ).exec();
-      });
-      await chat.save(chat);
-      res
-        .status(201)
-        .json({ msg: "chat created successfully", data: chat._id });
+        await Userdb.findOneAndUpdate(
+          { _id: userId },
+          { $push: { friends: mongoose.Types.ObjectId(recieverId) } }
+        ).exec();
+        await chat.save(chat);
+        res
+          .status(201)
+          .json({ msg: "chat created successfully", data: chat._id });
+      }
     } else {
       res.status(401).json({ msg: "chat not created  no Id" });
     }
