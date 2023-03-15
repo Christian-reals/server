@@ -47,8 +47,7 @@ io.on('connection',(socket)=>{
     socket.emit('info', formatmsg(botname,' welcome to chatcord'))
     socket.broadcast.to(roomid).emit ('info', formatmsg(botname,`${userid} has joined the chat`))
     socket.on('chatMessage',message=>{
-      console.log(message)
-        io.to(roomid).broadcast.emit('message',formatmsg(userid,message))
+        socket.broadcast.to(roomid).emit('message',formatmsg(userid,message))
     })
 })
   socket.on('disconnect',()=>{

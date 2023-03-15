@@ -112,7 +112,7 @@ const createChat = async (req, res) => {
         return friendId == recieverId
       })
       if (chatExists.length>0) {
-        res.status(200).json({msg:"chat already exists"})
+        res.status(301).json({msg:"chat already exists"})
         console.log(chatExists,'exists')
       } else {
         const chat = new Chatdb({
