@@ -8,8 +8,9 @@ const {
   getUserEvents,
   registerEvents,
   likeEvents,
+  deleteUserEvents,
 } = require("../controllers/events");
-const { getAccount, deleteAccount, getAllAccounts } = require("../controllers/account");
+const { getAccount, deleteAccount, getAllAccounts, blockUser } = require("../controllers/account");
 const {
   login,
   register,
@@ -29,6 +30,8 @@ const {
   createChat,
   getUserChats,
   getMessages,
+  blockChat,
+  deleteUserChat,
 } = require("../controllers/chat");
 const {
   getAllMeetups,
@@ -71,8 +74,9 @@ route.get("/", (req, res) => {
 
 //acount
 route.post("/account/delete", auth, deleteAccount);
-route.post("/account/:userId", auth, getAccount);
+route.get("/account/:userId", getAccount);
 route.get("/accounts", auth,getAllAccounts);
+route.put("/accounts/block/:id",auth,blockUser)
 
 //auth
 route.post("/register", register);
@@ -86,8 +90,9 @@ route.get("/verifyToken", auth, verifyToken);
 route.post("/event", auth, createEvent);
 route.get("/event",auth, getAllEvents);
 route.get("/event/:id", auth, getEvent);
-route.get("/event/myEvents/:userId", auth,getUserEvents);
+route.get("/event/myEvents/:userId",getUserEvents);
 route.post("/event/register/:id",auth, registerEvents);
+route.post("/event/delete/:id", deleteUserEvents);
 route.get("/event/like/:id", auth,likeEvents);
 route.put("/event/:id", auth, updateEvent);
 route.delete("/event/:id", auth, deleteEvent);
@@ -131,5 +136,8 @@ route.post("/chat/message/react/:id", auth, reactToMessage);
 route.post("/chat/message/reply/:id", auth, replyMessage);
 route.delete("/chat/message/:id", auth, deleteMessage);
 route.delete("/chat/:id", auth, deleteChat);
+route.put("/chat/delete/:id", deleteUserChat);
+route.put("/chat/block/:id", blockChat);
+
 
 module.exports = route;

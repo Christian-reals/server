@@ -16,7 +16,7 @@ const createDiscussion = async (req, res) => {
 };
 const getDiscussion = async (req, res) => {
     const {id} = req.params
-    console.log(id)
+    
     try {
       const discussion = await Discussiondb.findOne({_id:id})
         .populate('comments');
@@ -80,7 +80,7 @@ const reactToDiscussion = async (req, res) => {
 const replyDiscussion = async (req, res) => {
   //id of the chat
   const { id } = req.params;
-  console.log(id);
+  
   const { userId, ...others } = req.body;
   try {
     //create comment

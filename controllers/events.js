@@ -81,9 +81,11 @@ const getEvent = async (req, res) => {
 const getUserEvents = async (req, res) => {
   const { userId } = req.params;
   try {
+    console.log('strat')
     const user = await Userdb.findOne({ _id: userId }).populate('events').exec();
     const userEvents = user.events;
-    if (userEvents>0) {
+    console.log('events')
+    if (userEvents.length>0) {
         res.status(201).json({ data: userEvents,msg:'user events found' });
     } else {
         res.status(400).json({msg:'user has no events' });
@@ -130,7 +132,7 @@ const likeEvents = async (req, res) => {
 const registerEvents = async (req, res) => {
   const { id } = req.params;
   const { userId } = req.body;
-  console.log(id)
+  
   try {
    const event =  await EventDb.findOneAndUpdate(
       { _id: id },
@@ -152,6 +154,31 @@ const registerEvents = async (req, res) => {
   }
 };
 
+const deleteUserEvents = async (req, res) => {
+  const { id } = req.params;
+  const { userId } = req.body;
+  
+  try {
+   const event =  await EventDb.findOneAndUpdate(
+      { _id: id },
+      { $pull: { participants: userId } }
+    ).exec();
+    if (event) {
+      await Userdb.findOneAndUpdate(
+        { _id: userId },
+        { $pull: { events:id } }
+      ).exec();
+    res.status(200).json({msg:'event deleted sucessfully'})
+    } else {
+      res.status(201).json({msg:'event was not found'});
+      
+    }
+
+  } catch (error) {
+    res.status(400).json({msg:'event deletion failed',error});
+  }
+};
+
 module.exports = {
   createEvent,
   getAllEvents,
@@ -161,4 +188,5 @@ module.exports = {
   registerEvents,
   likeEvents,
   getUserEvents,
+  deleteUserEvents,
 };

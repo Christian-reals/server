@@ -9,10 +9,22 @@ const getAccount = async (req, res) => {
     .exec();
     res.status(200).json({msg:'success',data:user})
   } catch (error) {
-    res.status(400).json({msg:'unsucessfull'})
+    console.log(error)
+    res.status(400).json({msg:'unsucessfull: could not fetch user',error})
   }
 
 };
+
+const blockUser = async (req, res) => {
+  const {userId} = req.body
+  const { id } = req.params;
+  await Userdb.updateOne(
+    { _id: userId },
+    { $push: { blockedUsers: id }}
+  );
+};
+
+
 
 const getAllAccounts = async (req, res) => {
   try {
@@ -65,5 +77,5 @@ const deleteAccount = async (req, res) => {
 
 const suspendAccount = async (req, res) => {};
 
-module.exports = {deleteAccount,getAccount, getAllAccounts}
+module.exports = {deleteAccount,getAccount, getAllAccounts,blockUser}
 

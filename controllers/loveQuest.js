@@ -21,7 +21,7 @@ const createLoveQuest = async (req, res) => {
 };
 const getLoveQuest = async (req, res) => {
   const { id } = req.params;
-  console.log(id);
+  
   try {
     const LoveQuest = await loveQuestdb.findOne({ _id: id });
     if (LoveQuest) {

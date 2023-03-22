@@ -104,12 +104,11 @@ const createMessage = async (req, res) => {
 const createChat = async (req, res) => {
   try {
     const { recieverId, userId } = req.body;
-    console.log(recieverId, userId);
 
     if (recieverId && userId) {
       const user = await Userdb.findById(userId)
-      const chatExists = user.friends.filter((friendId)=>{
-        return friendId == recieverId
+      const chatExists = user.friends.filter((friend)=>{
+        return friend?.friend?.toString() == recieverId
       })
       if (chatExists.length>0) {
         res.status(301).json({msg:"chat already exists"})
@@ -122,7 +121,7 @@ const createChat = async (req, res) => {
           ],
         });
         chat.members.forEach(async (id) => {
-          console.log(id);
+          
           await Userdb.findOneAndUpdate(
             { _id: id },
             { $push: { chats: mongoose.Types.ObjectId(chat._id) } }
@@ -130,11 +129,11 @@ const createChat = async (req, res) => {
         });
         await Userdb.findOneAndUpdate(
           { _id: recieverId },
-          { $push: { friends: mongoose.Types.ObjectId(userId) } }
+          { $push: { friends: {friend:mongoose.Types.ObjectId(userId)} } }
         ).exec();
         await Userdb.findOneAndUpdate(
           { _id: userId },
-          { $push: { friends: mongoose.Types.ObjectId(recieverId) } }
+          { $push: { friends: {friend:mongoose.Types.ObjectId(recieverId)} } }
         ).exec();
         await chat.save(chat);
         res
@@ -209,7 +208,7 @@ const getUserChats = async (req, res) => {
 //get messages in a chat
 const getMessages = async (req, res) => {
   const { id } = req.params;
-  console.log(id);
+  
   try {
     const chat = await Chatdb.findById({ _id: id }).populate("messages").exec();
     const messages = chat.messages;
@@ -227,6 +226,81 @@ const getMessages = async (req, res) => {
 const deleteChat = async (req, res) => {
   const { id } = req.params;
   const deletedmessage = Chatdb.findByIdAndDelete(id);
+};
+
+//delete user chats
+const deleteUserChat = async (req, res) => {
+  const {userId} = req.body
+  console.log(req.body)
+  const { id } = req.params;
+  const chat = await Chatdb.findById(id)
+  const friendId  = chat.members.filter((member)=>{return member != userId  })
+  console.log('deleteing', userId,id)
+  if (userId&&id) {
+    try {
+      await Userdb.updateOne(
+        { _id: userId },
+        { $pull: { chats: id }}
+      );
+      await Userdb.findOneAndUpdate(
+        { _id: userId },
+        { $pull: { friends: { friend: friendId } } },
+        { new: true },)
+    res.status(200).json({msg:'success: chat deleted'})
+
+    } catch (error) {
+    res.status(500).json({msg:'error: something went wrong',error})
+      
+    }
+  } else {
+    res.status(400).json({msg:'error: invalid id'})
+  }
+
+};
+
+//blockchat
+
+const blockChat = async (req, res) => {
+  const {userId} = req.body
+  const { id } = req.params;
+  console.log('blocking', userId,id)
+  const chat = await Chatdb.findById(id)
+  const friendId  = chat.members.filter((member)=>{return member != userId  })
+  console.log(friendId)
+  if (friendId) {
+    try {
+        await Userdb.updateOne(
+    { _id: userId },
+    { $push: { blockedChats: id }}
+  );
+  await Userdb.updateOne(
+    { _id: userId },
+    { $set: { "friends.$[elem].blocked": true } }, { arrayFilters: [{ "elem.friend": friendId  }] }
+  );
+  res.status(200).json({msg:'success: chat blocked'})
+    } catch (error) {
+    res.status(500).json({msg:'error: something went wrong'})
+      
+    }
+  } else {
+    res.status(400).json({msg:'error: unable to resolve friendId'})
+  }
+
+};
+
+const unBlockChat = async (req, res) => {
+  const {userId} = req.body
+  const { id } = req.params;
+  const chat = await Chatdb.findById(id)
+  const friendId  = chat.members.filter((member)=>{return member != userId  })
+  await Userdb.updateOne(
+    { _id: userId },
+    { $pull: { blockedChats: id }}
+  );
+  await Userdb.updateOne(
+    { _id: userId },
+    { $set: { "friends.$[elem].blocked": false } }, { arrayFilters: [{ "elem.friend": friendId  }] }
+  );
 };
 
 const updateMessage = async (req, res) => {
@@ -260,7 +334,7 @@ const reactToMessage = async (req, res) => {
 const replyMessage = async (req, res) => {
   //id of the chat
   const { id } = req.params;
-  console.log(id);
+  
   const chatid = mongoose.Types.ObjectId(id);
   //id of the chat taht is being replied
   const { referenceid, from, to, ...others } = req.body;
@@ -306,6 +380,7 @@ const deleteMessage = async (req, res) => {
 
 module.exports = {
   deleteChat,
+  deleteUserChat,
   replyMessage,
   reactToMessage,
   createMessage,
@@ -315,4 +390,5 @@ module.exports = {
   getMessages,
   createChat,
   getUserChats,
+  blockChat,
 };

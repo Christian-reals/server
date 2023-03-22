@@ -100,7 +100,7 @@ const login = async (req, res) => {
           const userProfile = await Userdb.findOne({registrationDataId:user._id}) ;
           // console.log(userProfile,user._id)
           const id = userProfile._id
-          // console.log(id)
+          // 
           const username = user.userName;
           // console.log(username)
           const token = jwt.sign({ id, username }, process.env.SECRET_KEY, {
