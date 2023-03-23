@@ -210,7 +210,15 @@ const getMessages = async (req, res) => {
   const { id } = req.params;
   
   try {
-    const chat = await Chatdb.findById({ _id: id }).populate("messages").exec();
+    const chat = await Chatdb.findById({ _id: id }).populate({
+      path: "messages",
+      populate: [
+        { path: "refrenceChat"},
+        { path: "replies"},
+        
+      ]
+    })
+  .exec();
     const messages = chat.messages;
     if (messages) {
       res.status(200).json(messages);
@@ -334,40 +342,64 @@ const reactToMessage = async (req, res) => {
 const replyMessage = async (req, res) => {
   //id of the chat
   const { id } = req.params;
+  console.log(req.body)
+
   
   const chatid = mongoose.Types.ObjectId(id);
   //id of the chat taht is being replied
   const { referenceid, from, to, ...others } = req.body;
-  try {
-    const message = new Messagesdb({
-      ...others,
-      from: mongoose.Types.ObjectId(from),
-      to: mongoose.Types.ObjectId(to),
-      refrenceChat: mongoose.Types.ObjectId(referenceid),
-      isReply: true,
-      //add refrenced chat to the reply
-    });
+  if (referenceid&& from&& to) {
     try {
-      //add the reply to the refrenced chat
-      const refrence = await Messagesdb.findOneAndUpdate(
-        { _id: referenceid },
-        { $push: { replies: message._id } }
-      ).exec();
-      await message.save(message);
-      //save the reply as a message to the current chat
-      await Chatdb.findOneAndUpdate(
-        { _id: chatid },
-        { $push: { messages: message._id } }
-      ).exec();
-      res.status(201).json({ msg: "reply created successfully" });
+      const message = new Messagesdb({
+        ...others,
+        from: mongoose.Types.ObjectId(from),
+        to: mongoose.Types.ObjectId(to),
+        refrenceChat: mongoose.Types.ObjectId(referenceid),
+        isReply: true,
+        //add refrenced chat to the reply
+      });
+      try {
+        //add the reply to the refrenced chat
+        const refrence = await Messagesdb.findOneAndUpdate(
+          { _id: referenceid },
+          { $push: { replies: message._id } }
+        ).exec();
+        await message.save(message);
+        //save the reply as a message to the current chat
+        await Chatdb.findOneAndUpdate(
+          { _id: chatid },
+          { $push: { messages: message._id } }
+        ).exec();
+        res.status(201).json({ msg: "message replied successfully" });
+      } catch (error) {
+        res.json({ msg: "reply creation is not successful", error });
+      }
+      res.status(201).send;
     } catch (error) {
-      res.json({ msg: "reply creation is not successful", error });
+      res.send(error);
     }
-    res.status(201).send;
-  } catch (error) {
-    res.send(error);
+  } else {
+    res.status(400).json({msg:'reply failed'})
   }
+
 };
+const deleteChatMessage = async(req,res)=>{
+  const {chatId,messageId} = req.params
+  console.log(chatId,messageId)
+  try {
+    //find the chat with ChatId and pull message that has _id of messageId
+    await Chatdb.findOneAndUpdate(
+      { _id: chatId },
+      { $pull: { messages: messageId} }
+    ).exec();
+    //delete the message
+    await Messagesdb.findByIdAndDelete(messageId)
+    res.status(201).json({ msg: "message deleted successfully" });
+  } catch (error) {
+    res.json({ msg: "message deletion is not successful", error });
+  }
+
+}
 const deleteMessage = async (req, res) => {
   const { id } = req.params;
   try {
@@ -391,4 +423,5 @@ module.exports = {
   createChat,
   getUserChats,
   blockChat,
+  deleteChatMessage,
 };

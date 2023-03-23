@@ -32,6 +32,7 @@ const {
   getMessages,
   blockChat,
   deleteUserChat,
+  deleteChatMessage,
 } = require("../controllers/chat");
 const {
   getAllMeetups,
@@ -83,16 +84,16 @@ route.post("/register", register);
 route.post("/login", login);
 route.post("/profile", createProfile);
 route.get("/verify", verify);
-route.put("/changePassword", changePassword);
+route.put("/changePassword",auth, changePassword);
 route.get("/verifyToken", auth, verifyToken);
 
 //Events
 route.post("/event", auth, createEvent);
 route.get("/event",auth, getAllEvents);
 route.get("/event/:id", auth, getEvent);
-route.get("/event/myEvents/:userId",getUserEvents);
+route.get("/event/myEvents/:userId",auth,getUserEvents);
 route.post("/event/register/:id",auth, registerEvents);
-route.post("/event/delete/:id", deleteUserEvents);
+route.post("/event/delete/:id",auth, deleteUserEvents);
 route.get("/event/like/:id", auth,likeEvents);
 route.put("/event/:id", auth, updateEvent);
 route.delete("/event/:id", auth, deleteEvent);
@@ -129,15 +130,16 @@ route.delete("/lovequest/:id", auth, deleteLoveQuest);
 route.post("/chat/message", auth, createMessage);
 route.get("/chats/:id", auth, getUserChats);
 route.get("/chats", auth, getAllChats);
-route.post("/chat", createChat);
-route.get("/chat/message/:id", auth, getMessages);
+route.post("/chat", auth,createChat);
+route.get("/chat/message/:id",auth, getMessages);
 route.put("/chat/message/:id", auth, updateMessage);
-route.post("/chat/message/react/:id", auth, reactToMessage);
-route.post("/chat/message/reply/:id", auth, replyMessage);
+route.post("/chat/message/react/:id",auth, reactToMessage);
+route.post("/chat/message/reply/:id", auth,replyMessage);
 route.delete("/chat/message/:id", auth, deleteMessage);
 route.delete("/chat/:id", auth, deleteChat);
-route.put("/chat/delete/:id", deleteUserChat);
-route.put("/chat/block/:id", blockChat);
+route.delete("/chat/:chatId/message/:messageId",auth, deleteChatMessage);
+route.put("/chat/delete/:id",auth, deleteUserChat);
+route.put("/chat/block/:id", auth,blockChat);
 
 
 module.exports = route;
