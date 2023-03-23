@@ -9,15 +9,8 @@ const formatmsg = require('./utils/formatMessage')
 require('./db/connectdb')
 const dotenv=require('dotenv')
 const cors = require('cors')
-const { ExpressPeerServer } = require('peer');
-
-
 const server= http.createServer(app)
 
-
-const peerServer = ExpressPeerServer(server, {
-  debug: true,
-});
 
 
 // // Set your secret key. Remember to switch to your live secret key in production.
@@ -48,7 +41,6 @@ const peerServer = ExpressPeerServer(server, {
 // With express, you can redirect with:
 //   res.redirect(303, session.url);
 
-app.use('/videoCall', peerServer);
 
 const io = socket(server,{
   cors: {
