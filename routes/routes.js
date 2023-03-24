@@ -78,7 +78,7 @@ route.get("/", (req, res) => {
 route.post("/account/delete", auth, deleteAccount);
 route.get("/account/:userId", getAccount);
 route.get("/accounts", auth,getAllAccounts);
-route.get("/accounts/blockedAccounts", auth,getUserBlockedAccounts);
+route.get("/accounts/blockedAccounts/:userId", auth,getUserBlockedAccounts);
 route.put("/accounts/block/:id",auth,blockUser)
 route.post('/account/createAvatar',createAvatar)
 
@@ -143,7 +143,7 @@ route.delete("/chat/:id", auth, deleteChat);
 route.delete("/chat/:chatId/message/:messageId",auth, deleteChatMessage);
 route.put("/chat/delete/:id",auth, deleteUserChat);
 route.put("/chat/block/:id", auth,blockChat);
-route.put("/chat/unblock/:id", auth,unBlockChat);
+route.put("/chat/unblock/", auth,unBlockChat);
 
 
 
