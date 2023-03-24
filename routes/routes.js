@@ -33,6 +33,7 @@ const {
   blockChat,
   deleteUserChat,
   deleteChatMessage,
+  unBlockChat,
 } = require("../controllers/chat");
 const {
   getAllMeetups,
@@ -142,6 +143,8 @@ route.delete("/chat/:id", auth, deleteChat);
 route.delete("/chat/:chatId/message/:messageId",auth, deleteChatMessage);
 route.put("/chat/delete/:id",auth, deleteUserChat);
 route.put("/chat/block/:id", auth,blockChat);
+route.put("/chat/unblock/:id", auth,unBlockChat);
+
 
 
 module.exports = route;
