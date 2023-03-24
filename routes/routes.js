@@ -10,7 +10,7 @@ const {
   likeEvents,
   deleteUserEvents,
 } = require("../controllers/events");
-const { getAccount, deleteAccount, getAllAccounts, blockUser } = require("../controllers/account");
+const { getAccount, deleteAccount, getAllAccounts, blockUser, createAvatar, getUserBlockedAccounts } = require("../controllers/account");
 const {
   login,
   register,
@@ -77,7 +77,9 @@ route.get("/", (req, res) => {
 route.post("/account/delete", auth, deleteAccount);
 route.get("/account/:userId", getAccount);
 route.get("/accounts", auth,getAllAccounts);
+route.get("/accounts/blockedAccounts", auth,getUserBlockedAccounts);
 route.put("/accounts/block/:id",auth,blockUser)
+route.post('/account/createAvatar',createAvatar)
 
 //auth
 route.post("/register", register);

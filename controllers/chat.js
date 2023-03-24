@@ -56,7 +56,6 @@ const createMessage = async (req, res) => {
           fileName: originalname,
           fileUrl: path.join(dirname + "/tmp/uploads/" + req.file.filename),
         });
-        console.log(message);
         try {
           await message.save(message);
           const chat = await Chatdb.find({ _id: chatId });
@@ -298,12 +297,12 @@ const blockChat = async (req, res) => {
 
 const unBlockChat = async (req, res) => {
   const {userId} = req.body
-  const { id } = req.params;
-  const chat = await Chatdb.findById(id)
+const chat = await Chatdb.find({ members: { $in: [userId] } })
+
   const friendId  = chat.members.filter((member)=>{return member != userId  })
   await Userdb.updateOne(
     { _id: userId },
-    { $pull: { blockedChats: id }}
+    { $pull: { blockedChats: chat._id.toString() }}
   );
   await Userdb.updateOne(
     { _id: userId },
@@ -424,4 +423,5 @@ module.exports = {
   getUserChats,
   blockChat,
   deleteChatMessage,
+  unBlockChat,
 };

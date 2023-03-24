@@ -385,6 +385,11 @@ var userschema = new mongoose.Schema(
         ref: "Chats",
       },
     ],
+    avatar:String,
+    photos:[{
+      id:mongoose.Types.ObjectId,
+      url:String
+    }],
     isPremium: {
       type: Boolean,
       default: false,

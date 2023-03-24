@@ -15,7 +15,6 @@ const eventDb = new mongoose.Schema({
     date: {
         type:Date,
         required:true,
-        // default:Date.now()
     },
     like:{
         type:Number,

@@ -33,7 +33,6 @@ const createEvent = async (req, res) => {
         res.status(401).json({msg: 'fields are not correctly filled',err});
       } else {
         const { title, category, venue, description, date } = req.body;
-        console.log(dirname);
         const event = new EventDb({
           title: title,
           category: category,
