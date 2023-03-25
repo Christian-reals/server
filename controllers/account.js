@@ -59,7 +59,7 @@ const getUserBlockedAccounts = async (req, res) => {
 const getNotifications = async (req, res)=>{
   const { userId } = req.params;
   try {
-    const user = await Userdb.findById(userId)
+    const user = await Userdb.findById(userId).populate('notifications.from')
       .exec();
       console.log(userId,user)
     res.status(200).json({ msg: "success", data: user.notifications });

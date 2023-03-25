@@ -138,7 +138,7 @@ route.delete("/lovequest/:id", auth, deleteLoveQuest);
 
 //chats and message
 route.post("/chat/message", auth, createMessage);
-route.get("/chats/:id", auth, getUserChats);
+route.get("/chats/:id",  getUserChats);
 route.get("/chats", auth, getAllChats);
 route.post("/chat", auth,createChat);
 route.get("/chat/message/:id",auth, getMessages);

@@ -178,10 +178,10 @@ const getUserChats = async (req, res) => {
             const { userName } = reciever.registrationDataId;
             const { avatar } = reciever;
             // Get last message
-            const chat = await Chatdb.findById(chat._id)
+            const chatMessage = await Chatdb.findById(chat._id)
               .populate("messages")
               .exec();
-            const messages = chat.messages;
+            const messages = chatMessage.messages;
             return {
               avatar: avatar,
               recieverId: recieverId[0],

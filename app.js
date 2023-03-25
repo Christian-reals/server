@@ -81,20 +81,23 @@ io.on("connection", (socket) => {
       socket.broadcast.to(roomid).emit("videoCall", formatmsg(userid, message));
     });
   });
-  socket.on('notification', async({from,reciever,message})=>{
-    console.log('notify')
+  socket.on("notification", async ({ from, reciever, message }) => {
+    console.log("notify");
     try {
-     const user=  await Userdb.findByIdAndUpdate(reciever,{$push:{notifications:{from:from,message:message}}},{new:true})
-     console.log(user)
+      const user = await Userdb.findByIdAndUpdate(
+        reciever,
+        { $push: { notifications: { from: from, message: message } } },
+        { new: true }
+      );
       const recipientSockets = await io.in(reciever.toString()).fetchSockets();
       recipientSockets.forEach((socket) => {
-        socket.emit('notification', { from: from, message: message });
+        socket.emit("notification", { from: from, message: message });
       });
-      console.log('notify done')
+      console.log("notify done");
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
-  })
+  });
   socket.on("disconnect", () => {
     io.emit("disconnected", "disconnected");
   });

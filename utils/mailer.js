@@ -455,9 +455,9 @@ const sendEventRegistrationEmail = async (email, event) => {
                   <td style="padding:30px;background-color:#ffffff;">
                     <h1 style="margin-top:0;margin-bottom:1.38em;font-size:1.953em;line-height:1.3;font-weight:bold;letter-spacing:-0.02em;">Event registration notification</h1>
                     <p style="margin:0;">Hi 😊,</p>
-                    <img width="2170" alt="Doppler Health" style="width:2170px;max-width:80%;height:auto;border:none;text-decoration:none;color:#ffffff;" src=${event.imageUrl}>
-                    <p>You are now registered as a participant to the ${event.name}.</p>
-                    <p>date: ${event.date}</p>
+                    <img width="2170" alt="Doppler Health" style="width:2170px;max-width:80%;height:auto;border:none;text-decoration:none;color:#ffffff;" src=${event.imageUrl} alt=${event.title}>
+                    <p>You are now registered as a participant to the ${event.title}.</p>
+                    <p>date: ${new Date(event.date).toUTCString()}</p>
                     <p>venue ${event.venue}:</p>
                     <p>Please Ignore if this message is not for you.</p>
                     <p>Thanks,</p>
