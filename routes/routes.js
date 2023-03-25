@@ -93,8 +93,8 @@ route.post("/profile", createProfile);
 route.get("/verify", verify);
 route.get("/resetPassword/verify", verifyResetPasswordToken);
 route.put("/changePassword",auth, changePassword);
-route.put("/resetPassword/:id",auth, resetPassword);
-route.post("/resetPassword/link",auth, forgotPasswordLink);
+route.put("/resetPassword/:id", resetPassword);
+route.post("/resetPassword/link", forgotPasswordLink);
 route.get("/verifyToken", auth, verifyToken);
 
 //Events
