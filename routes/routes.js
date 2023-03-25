@@ -18,6 +18,8 @@ const {
   createProfile,
   changePassword,
   verifyToken,
+  resetPassword,
+  forgotPasswordLink,
 } = require("../controllers/auth");
 const {
   createMessage,
@@ -63,6 +65,7 @@ const {
   getLoveQuest,
   dislikeLoveQuest,
 } = require("../controllers/loveQuest");
+const { verifyResetPasswordToken } = require("../middleware/jwt");
 //auth middleware
 const auth = require("../middleware/jwt").authMiddleware;
 const verify = require("../middleware/jwt").verifyToken;
@@ -88,7 +91,10 @@ route.post("/register", register);
 route.post("/login", login);
 route.post("/profile", createProfile);
 route.get("/verify", verify);
+route.get("/resetPassword/verify", verifyResetPasswordToken);
 route.put("/changePassword",auth, changePassword);
+route.put("/resetPassword/:id",auth, resetPassword);
+route.post("/resetPassword/link",auth, forgotPasswordLink);
 route.get("/verifyToken", auth, verifyToken);
 
 //Events
