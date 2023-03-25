@@ -56,6 +56,21 @@ const getUserBlockedAccounts = async (req, res) => {
   }
 };
 
+const getNotifications = async (req, res)=>{
+  const { userId } = req.params;
+  try {
+    const user = await Userdb.findById(userId)
+      .exec();
+      console.log(userId,user)
+    res.status(200).json({ msg: "success", data: user.notifications });
+
+  } catch (error) {
+    res
+      .status(400)
+      .json({ msg: "unsucessfull: could not fetch notications", error });
+  }
+}
+
 const createAvatar = async (req, res) => {
   upload(req, res, async (err) => {
     if (err) {
@@ -146,4 +161,5 @@ module.exports = {
   getAllAccounts,
   blockUser,
   createAvatar,
+  getNotifications,
 };

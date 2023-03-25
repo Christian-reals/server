@@ -3,6 +3,7 @@ const path = require("path");
 const multer = require("multer");
 const EventDb = require("../models/eventdb");
 const { Userdb } = require("../models/userdb");
+const { sendEventRegistrationEmail } = require("../utils/mailer");
 
 //getting the directory outside controller
 const dirnamearr = __dirname.split(`\\`);
@@ -30,7 +31,7 @@ const createEvent = async (req, res) => {
     console.log(req.file);
     if (req.body && req.file) {
       if (err) {
-        res.status(401).json({msg: 'fields are not correctly filled',err});
+        res.status(401).json({ msg: "fields are not correctly filled", err });
       } else {
         const { title, category, venue, description, date } = req.body;
         const event = new EventDb({
@@ -80,16 +81,17 @@ const getEvent = async (req, res) => {
 const getUserEvents = async (req, res) => {
   const { userId } = req.params;
   try {
-    console.log('strat')
-    const user = await Userdb.findOne({ _id: userId }).populate('events').exec();
+    console.log("strat");
+    const user = await Userdb.findOne({ _id: userId })
+      .populate("events")
+      .exec();
     const userEvents = user.events;
-    console.log('events')
-    if (userEvents.length>0) {
-        res.status(201).json({ data: userEvents,msg:'user events found' });
+    console.log("events");
+    if (userEvents.length > 0) {
+      res.status(201).json({ data: userEvents, msg: "user events found" });
     } else {
-        res.status(400).json({msg:'user has no events' });
+      res.status(400).json({ msg: "user has no events" });
     }
-    
   } catch (error) {
     res.status(400).json({ msg: "could not fetch event", error });
   }
@@ -121,60 +123,64 @@ const likeEvents = async (req, res) => {
       { $inc: { likes: 1 } }
     ).exec();
     if (likedEvent) {
-    res.status(200).json({msg:'request sucessfull',});
-      
+      res.status(200).json({ msg: "request sucessfull" });
     }
   } catch (error) {
-    res.status(400).json({msg:'request not sucessfull',error});
+    res.status(400).json({ msg: "request not sucessfull", error });
   }
 };
 const registerEvents = async (req, res) => {
   const { id } = req.params;
   const { userId } = req.body;
-  
-  try {
-   const event =  await EventDb.findOneAndUpdate(
-      { _id: id },
-      { $push: { participants: userId } }
-    ).exec();
-    if (event) {
-      await Userdb.findOneAndUpdate(
-        { _id: userId },
-        { $push: { events:id } }
-      ).exec();
-    res.status(200).json({msg:'event registration sucessful'})
-    } else {
-      res.status(201).json({msg:'event was not found'});
-      
-    }
 
+  try {
+    const user = await Userdb.findById(userId).populate("registrationDataId");
+    const userRegistered = user.events.filter((event) => {
+      return event.toString() == id;
+    });
+    if (userRegistered.length > 0) {
+      res.status(201).json({ msg: "event already exists" });
+    } else {
+      const event = await EventDb.findOneAndUpdate(
+        { _id: id },
+        { $push: { participants: userId } }
+      ).exec();
+      if (event) {
+        await Userdb.findOneAndUpdate(
+          { _id: userId },
+          { $push: { events: id } }
+        ).exec();
+        sendEventRegistrationEmail(user?.registrationDataId?.email, event);
+        res.status(200).json({ msg: "event registration sucessful" });
+      } else {
+        res.status(400).json({ msg: "event was not found" });
+      }
+    }
   } catch (error) {
-    res.status(400).json({msg:'event registration failed',error});
+    res.status(400).json({ msg: "event registration failed", error });
   }
 };
 
 const deleteUserEvents = async (req, res) => {
   const { id } = req.params;
   const { userId } = req.body;
-  
+
   try {
-   const event =  await EventDb.findOneAndUpdate(
+    const event = await EventDb.findOneAndUpdate(
       { _id: id },
       { $pull: { participants: userId } }
     ).exec();
     if (event) {
       await Userdb.findOneAndUpdate(
         { _id: userId },
-        { $pull: { events:id } }
+        { $pull: { events: id } }
       ).exec();
-    res.status(200).json({msg:'event deleted sucessfully'})
+      res.status(200).json({ msg: "event deleted sucessfully" });
     } else {
-      res.status(201).json({msg:'event was not found'});
-      
+      res.status(201).json({ msg: "event was not found" });
     }
-
   } catch (error) {
-    res.status(400).json({msg:'event deletion failed',error});
+    res.status(400).json({ msg: "event deletion failed", error });
   }
 };
 

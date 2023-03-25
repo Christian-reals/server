@@ -3,8 +3,10 @@ const bcrypt = require("bcrypt");
 const { Userdb, registrationDb } = require("../models/userdb");
 const { genSalt } = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const sendVerificationEmail = require("../utils/mailer");
-
+const {
+  sendVerificationEmail,
+  sendResetPasswordEmail,
+} = require("../utils/mailer");
 
 const register = async (req, res) => {
   console.log("register request");
@@ -97,24 +99,24 @@ const login = async (req, res) => {
         // console.log(user);
         const userValid = await bcrypt.compare(password, user.password);
         if (userValid) {
-          const userProfile = await Userdb.findOne({registrationDataId:user._id}) ;
+          const userProfile = await Userdb.findOne({
+            registrationDataId: user._id,
+          });
           // console.log(userProfile,user._id)
-          const id = userProfile._id
-          // 
+          const id = userProfile._id;
+          //
           const username = user.userName;
           // console.log(username)
           const token = jwt.sign({ id, username }, process.env.SECRET_KEY, {
             expiresIn: "30d",
           });
-          return res
-            .status(201)
-            .json({
-              msg: "user logged in",
-              token: token,
-              verified: user.email_verified,
-              email: user.email,
-              username: user.firstName,
-            });
+          return res.status(201).json({
+            msg: "user logged in",
+            token: token,
+            verified: user.email_verified,
+            email: user.email,
+            username: user.firstName,
+          });
         } else {
           return res.status(401).json({ msg: "password incorrect" });
         }
@@ -130,41 +132,94 @@ const login = async (req, res) => {
   }
 };
 
-const forgotPassword = async (req, res) => {
-  
+//sends reset password to email
+const forgotPasswordLink = async (req, res) => {
+  const { email } = req.body;
+  if (email) {
+    try {
+      const user = await registrationDb.find({ email: email });
+      if (user) {
+        const token = jwt.sign({ email }, process.env.SECRET_KEY, {
+          expiresIn: "30m",
+        });
+        sendResetPasswordEmail(email, token);
+        res.status(200).json({ msg: "success" });
+      } else {
+        res.status(400).json({ msg: "user not found" });
+      }
+    } catch (error) {}
+  } else {
+    res.status(400).json({ msg: "no email in request body" });
+  }
 };
-const changePassword = async (req, res) => {
-  const {userId, oldPassword,newPassword} = req.body
 
+//updates the password to the new password
+const resetPassword = async (req, res) => {
+  const { id } = req.params;
+  const { oldPassword, newPassword } = req.body;
   try {
-    const account = await Userdb.findById(userId)
-    const {registrationDataId} = account
-    const user = await registrationDb.findById(registrationDataId)
+    const user = await registrationDb.findById(id);
     if (user) {
       // console.log(user);
       const userValid = await bcrypt.compare(oldPassword, user.password);
       if (userValid) {
         const salt = await genSalt();
         const hashedPassword = await bcrypt.hash(newPassword, salt);
-        await registrationDb.findByIdAndUpdate(registrationDataId,{password:hashedPassword})
-        return res
-          .status(201)
-          .json({
-            msg: "Password changed sucessfully",
-          });
+        await registrationDb.findByIdAndUpdate(id, {
+          password: hashedPassword,
+        });
+        return res.status(201).json({
+          msg: "Password changed sucessfully",
+        });
       } else {
         return res.status(400).json({ msg: "old password incorrect" });
       }
     }
     res.status(400).json({ msg: "user not found" });
   } catch (error) {
-    res.status(400).json({msg:'error: could not change password',error})
+    res.status(400).json({ msg: "error: could not change password", error });
+  }
+};
+const changePassword = async (req, res) => {
+  const { userId, oldPassword, newPassword } = req.body;
+
+  try {
+    const account = await Userdb.findById(userId);
+    const { registrationDataId } = account;
+    const user = await registrationDb.findById(registrationDataId);
+    if (user) {
+      // console.log(user);
+      const userValid = await bcrypt.compare(oldPassword, user.password);
+      if (userValid) {
+        const salt = await genSalt();
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+        await registrationDb.findByIdAndUpdate(registrationDataId, {
+          password: hashedPassword,
+        });
+        return res.status(201).json({
+          msg: "Password changed sucessfully",
+        });
+      } else {
+        return res.status(400).json({ msg: "old password incorrect" });
+      }
+    }
+    res.status(400).json({ msg: "user not found" });
+  } catch (error) {
+    res.status(400).json({ msg: "error: could not change password", error });
   }
 };
 
-const verifyToken = async(req,res)=>{
-  res.status(200).json({msg:'token verified'})
-}
+const verifyToken = async (req, res) => {
+  res.status(200).json({ msg: "token verified" });
+};
 
-
-module.exports = { login, register, verifyToken, createProfile, verifyMail,changePassword };
+module.exports = {
+  login,
+  register,
+  verifyToken,
+  createProfile,
+  verifyMail,
+  changePassword,
+  resetPassword,
+  forgotPasswordLink,
+};

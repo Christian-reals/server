@@ -409,6 +409,20 @@ var userschema = new mongoose.Schema(
       default: false,
       reason: String,
     },
+    notifications:[{
+      from:      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Users",
+      },
+      message:String,
+      date:{
+        type: Date,
+        default: Date.now()
+      },
+      seen:{
+        default:false
+      }
+    }],
     date: String,
   },
   {
