@@ -10,10 +10,9 @@ require("./db/connectdb");
 const dotenv = require("dotenv");
 const cors = require("cors");
 const { Userdb } = require("./models/userdb");
-const { ExpressPeerServer } = require("peer");
+// const { ExpressPeerServer } = require("peer");
 const server = http.createServer(app);
 const webPush = require("web-push");
-const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY)
 
 
 //set up express middlewares
@@ -32,13 +31,13 @@ app.use(bodyParser.json());
 app.use(cors());
 app.use("/", route);
 
-//SETTING PEER SERVER
-const peerServer = ExpressPeerServer(server, {
-  debug: true,
-  path: "/", // change 'myapp' to whatever path you'd like to use
-});
+// //SETTING PEER SERVER
+// const peerServer = ExpressPeerServer(server, {
+//   debug: true,
+//   path: "/", // change 'myapp' to whatever path you'd like to use
+// });
 
-app.use("/peerjs", peerServer); // endpoint for connecting to PeerJS server
+// app.use("/peerjs", peerServer); // endpoint for connecting to PeerJS server
 
 //setting up web-push
 

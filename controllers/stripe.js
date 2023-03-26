@@ -38,8 +38,8 @@ const createCheckout = async (req, res) => {
       subscription_data: {
         trial_period_days: 3, // optional trial period
       },
-      success_url: `http://127.0.0.1:5173/dashboard/payments`,
-      cancel_url: "http://127.0.0.1:5173/dashboard/payments",
+      success_url: `https://christianreal.onrender.com/dashboard/payments`,
+      cancel_url: "https://christianreal.onrender.com/dashboard/payments",
     });
 
 
