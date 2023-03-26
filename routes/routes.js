@@ -100,10 +100,10 @@ route.get("/verifyToken", auth, verifyToken);
 
 //payments
 
-route.post('/payment/checkout',createCheckout)
-route.get('/payment/checkPlan/:userId',checkUserPlan)
-route.get('/payment/paymentMethod/:userId',getPaymentMethod)
-route.post('/payment/checkPaymentStatus/:sessionId',checkPaymentStatus)
+route.post('/payment/checkout',auth,createCheckout)
+route.get('/payment/checkPlan/:userId',auth,checkUserPlan)
+route.get('/payment/paymentMethod/:userId',auth,getPaymentMethod)
+route.post('/payment/checkPaymentStatus/:sessionId',auth,checkPaymentStatus)
 
 
 
