@@ -61,7 +61,6 @@ const getNotifications = async (req, res)=>{
   try {
     const user = await Userdb.findById(userId).populate('notifications.from')
       .exec();
-      console.log(userId,user)
     res.status(200).json({ msg: "success", data: user.notifications });
 
   } catch (error) {

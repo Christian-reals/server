@@ -367,6 +367,7 @@ var userschema = new mongoose.Schema(
         },
       },
     ],
+    subscription:Object,
     blockedUsers: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -394,6 +395,10 @@ var userschema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    sessionId:String,
+    customerId:String,
+    subscriptionId:String,
+    paymentIntentId:String,
     isBanned: {
       type: Boolean,
       default: false,

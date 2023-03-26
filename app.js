@@ -10,44 +10,13 @@ require("./db/connectdb");
 const dotenv = require("dotenv");
 const cors = require("cors");
 const { Userdb } = require("./models/userdb");
+const { ExpressPeerServer } = require("peer");
 const server = http.createServer(app);
+const webPush = require("web-push");
+const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY)
 
-// // Set your secret key. Remember to switch to your live secret key in production.
-// // See your keys here: https://dashboard.stripe.com/apikeys
-// const stripe = require('stripe')('sk_test_51MnU8aHwyZAkqQEwMdmgXkK9VB6vf2PB1qaJUoT8rjRHCov9XZ6zPf3vzi39yZP6pgiQ8sH5pX5nv02jlnglKD9v00QagTg0Fi');
 
-// // The price ID passed from the client
-// //   const {priceId} = req.body;
-// const priceId = '{{PRICE_ID}}';
-
-// const session = await stripe.checkout.sessions.create({
-//   mode: 'subscription',
-//   line_items: [
-//     {
-//       price: priceId,
-//       // For metered billing, do not pass quantity
-//       quantity: 1,
-//     },
-//   ],
-//   // {CHECKOUT_SESSION_ID} is a string literal; do not change it!
-//   // the actual Session ID is returned in the query parameter when your customer
-//   // is redirected to the success page.
-//   success_url: 'https://example.com/success.html?session_id={CHECKOUT_SESSION_ID}',
-//   cancel_url: 'https://example.com/canceled.html',
-// });
-
-// Redirect to the URL returned on the Checkout Session.
-// With express, you can redirect with:
-//   res.redirect(303, session.url);
-
-const io = socket(server, {
-  cors: {
-    origin: `*`,
-    credentials: true,
-    methods: ["GET", "POST"],
-    allowedHeaders: ["Authorization"],
-  },
-});
+//set up express middlewares
 app.use(express.urlencoded({ extended: true }));
 
 app.use(function (req, res, next) {
@@ -63,8 +32,78 @@ app.use(bodyParser.json());
 app.use(cors());
 app.use("/", route);
 
+//SETTING PEER SERVER
+const peerServer = ExpressPeerServer(server, {
+  debug: true,
+  path: "/", // change 'myapp' to whatever path you'd like to use
+});
+
+app.use("/peerjs", peerServer); // endpoint for connecting to PeerJS server
+
+//setting up web-push
+
+webPush.setVapidDetails(
+  "mailto:ayomikunfaluyi@gmail.com",
+  process.env.VAPID_PUBLIC_KEY,
+  process.env.VAPID_PRIVATE_KEY
+);
+
+//subscribe to webpush 
+
+app.post("/subscribe", async (req, res) => {
+  console.log("subscribe");
+  try {
+    console.log(req.body);
+    //Get push subscription object
+
+    const { subscription, userId } = req.body;
+
+    //store subcription to database
+
+    await Userdb.findByIdAndUpdate(
+      userId,
+      { subscription: subscription },
+      { upsert: true }
+    );
+
+    //create payload
+    const payload = JSON.stringify({
+      title: "Welcome back",
+      body: "Please respect the website guidelines",
+    });
+
+    //Pass object into sendNotification
+    webPush
+      .sendNotification(subscription, payload)
+      .catch((err) => {
+        console.log(err);
+      })
+      .then((data) => {
+        console.log("pushSent");
+        res.status(200).json({ msg: "success", data });
+      });
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({ error });
+  }
+});
+
+//setting up stripe
+
+
+
+const io = socket(server, {
+  cors: {
+    origin: `*`,
+    credentials: true,
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Authorization"],
+  },
+});
+
 const botname = "Crbot";
 
+//socket function
 io.on("connection", (socket) => {
   // socket.emit('connect',formatmsg(botname,' welcome to chatcord'))
   socket.on("joinRoom", ({ userid, roomid }) => {
@@ -74,7 +113,40 @@ io.on("connection", (socket) => {
     socket.broadcast
       .to(roomid)
       .emit("info", formatmsg(botname, `${userid} has joined the chat`));
-    socket.on("chatMessage", (message) => {
+    socket.on("chatMessage", async (message) => {
+      try {
+        const { recieverId, userId } = message;
+        //get sender username
+        const user = await Userdb.findById(userId).populate(
+          "registrationDataId"
+        );
+        const username = user.registrationDataId.userName;
+        // Find the recipient's push subscription object
+        const reciever = await Userdb.findById(recieverId);
+        const subscription = reciever?.subscription;
+
+        // Create payload
+        const payload = JSON.stringify({
+          title: "New Message",
+          body: `You have a new message from ${username}`,
+        });
+
+        // Send push notification
+        webPush
+          .sendNotification(subscription, payload)
+          .catch((err) => {
+            console.log(err);
+          })
+          .then(() => {
+            console.log("Push notification sent");
+          });
+
+        // Broadcast message to other users in the room
+        socket.broadcast.to(roomid).emit("message", formatmsg(userid, message));
+      } catch (error) {
+        console.log(error);
+      }
+
       socket.broadcast.to(roomid).emit("message", formatmsg(userid, message));
     });
     socket.on("videoCall", (message) => {
@@ -94,12 +166,34 @@ io.on("connection", (socket) => {
         socket.emit("notification", { from: from, message: message });
       });
       console.log("notify done");
+      // Find the recipient's push subscription object
+      const recipient = await Userdb.findById(reciever);
+      const subscription = recipient.subscription;
+
+      // Create payload
+      const payload = JSON.stringify({
+        title: "New notification",
+        body: message,
+      });
+
+      // Send push notification
+      webPush
+        .sendNotification(subscription, payload)
+        .catch((err) => {
+          console.log(err);
+        })
+        .then(() => {
+          console.log("Push notification sent");
+        });
     } catch (error) {
       console.log(error);
     }
   });
   socket.on("disconnect", () => {
     io.emit("disconnected", "disconnected");
+  });
+  socket.on("error", (error) => {
+    io.emit("error", error);
   });
 });
 

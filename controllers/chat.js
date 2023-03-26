@@ -39,7 +39,6 @@ const createMessage = async (req, res) => {
         //if file is attched to request
 
         const { chatId, from, to, ...others } = req.body;
-        console.log(chatId, from, to, others, req.file);
         const originalname = req.file.originalname;
         const fileType = req.file.originalname.split(".").pop();
         console.log(originalname);
@@ -59,7 +58,6 @@ const createMessage = async (req, res) => {
         try {
           await message.save(message);
           const chat = await Chatdb.find({ _id: chatId });
-          console.log(chat);
           if (chat.length > 0) {
             await Chatdb.findOneAndUpdate(
               { _id: chatId },
@@ -111,7 +109,6 @@ const createChat = async (req, res) => {
       })
       if (chatExists.length>0) {
         res.status(301).json({msg:"chat already exists"})
-        console.log(chatExists,'exists')
       } else {
         const chat = new Chatdb({
           members: [
@@ -151,7 +148,6 @@ const createChat = async (req, res) => {
 const getAllChats = async (req, res) => {
   try {
     const chats = await Chatdb.find({}).lean();
-    console.log(chats);
     res.status(200).json({ data: chats, msg: "request sucessful" });
   } catch (error) {
     res.status(404).json({ msg: "failed", error: error });
@@ -163,7 +159,6 @@ const getUserChats = async (req, res) => {
     const user = await Userdb.findOne({ _id: id }).populate("chats").exec();
     const { chats } = user;
     if (chats.length > 0) {
-      console.log(chats)
       // Get receiver data for each chat
       const chatData = await Promise.all(
         chats.map(async (chat) => {
@@ -384,7 +379,6 @@ const replyMessage = async (req, res) => {
 };
 const deleteChatMessage = async(req,res)=>{
   const {chatId,messageId} = req.params
-  console.log(chatId,messageId)
   try {
     //find the chat with ChatId and pull message that has _id of messageId
     await Chatdb.findOneAndUpdate(

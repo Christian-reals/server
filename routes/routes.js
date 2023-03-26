@@ -66,6 +66,7 @@ const {
   dislikeLoveQuest,
 } = require("../controllers/loveQuest");
 const { verifyResetPasswordToken } = require("../middleware/jwt");
+const { createCheckout, checkUserPlan, checkPaymentStatus, getPaymentMethod } = require("../controllers/stripe");
 //auth middleware
 const auth = require("../middleware/jwt").authMiddleware;
 const verify = require("../middleware/jwt").verifyToken;
@@ -96,6 +97,15 @@ route.put("/changePassword",auth, changePassword);
 route.put("/resetPassword/:id", resetPassword);
 route.post("/resetPassword/link", forgotPasswordLink);
 route.get("/verifyToken", auth, verifyToken);
+
+//payments
+
+route.post('/payment/checkout',createCheckout)
+route.get('/payment/checkPlan/:userId',checkUserPlan)
+route.get('/payment/paymentMethod/:userId',getPaymentMethod)
+route.post('/payment/checkPaymentStatus/:sessionId',checkPaymentStatus)
+
+
 
 //Events
 route.post("/event", auth, createEvent);
