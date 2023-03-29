@@ -195,7 +195,8 @@ const getUserChats = async (req, res) => {
       res.status(400).json({ data: null, msg: "no chat found" });
     }
   } catch (error) {
-    res.status(400).json({ msg: "failed", error: error });
+    console.log(error)
+    res.status(400).json({ msg: "failed to ", error: error });
   }
 };
 

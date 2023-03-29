@@ -340,6 +340,7 @@ var userschema = new mongoose.Schema(
       type: mongoose.Types.ObjectId,
       ref: "registrationData",
       required: [true, "registrationDataId can not be empty"],
+      unique:true
     },
     profile_data: profileSchema,
     profile_complete: {
@@ -424,6 +425,7 @@ var userschema = new mongoose.Schema(
         type: Date,
         default: Date.now()
       },
+      notificationType:String,
       seen:{
         default:false
       }

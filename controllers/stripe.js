@@ -38,12 +38,13 @@ const createCheckout = async (req, res) => {
       subscription_data: {
         trial_period_days: 3, // optional trial period
       },
-      success_url: `https://christianreal.onrender.com/dashboard/payments`,
+      success_url: `https://christianreal.onrender.com/sucess`,
       cancel_url: "https://christianreal.onrender.com/dashboard/payments",
     });
 
+    console.log(session)
 
-    console.log(session.payment_method,'payment method')
+
     // Create a new customer in Stripe
     const customer = await stripe.customers.create({
       email: email,
@@ -98,9 +99,13 @@ const createCheckout = async (req, res) => {
 
 // Endpoint to retrieve payment details and update the database
 const checkPaymentStatus = async (req, res) => {
-  const { sessionId } = req.params;
+  const {userId} = req.params;
+
+
 
   try {
+    const user = await Userdb.findById(userId);
+    const {sessionId,customerId} = user;
     // Retrieve the Checkout Session from Stripe
     const session = await stripe.checkout.sessions.retrieve(sessionId, {
       expand: ["payment_intent"],
@@ -108,19 +113,31 @@ const checkPaymentStatus = async (req, res) => {
 
     // Check the payment status
     if (session.payment_status === "paid") {
-      // Update the database with the payment details
-      const customerId = session.customer;
-      const subscriptionId = session.subscription;
-      const paymentIntentId = session.payment_intent.id;
-      // ...update database with payment details...
+      console.log(session)
+      
+      const paymentMethodId = session?.payment_intent?.payment_method;
+      //add payment details to customer
+      await stripe.paymentMethods.attach(paymentMethodId, {
+        customer: customerId,
+      });
+    
+      await stripe.customers.update(customerId, {
+        invoice_settings: {
+          default_payment_method: paymentMethodId,
+        },
+      });
 
       // Display the payment details on the confirmation page
       const amount = session.amount_total / 100;
       const currency = session.currency.toUpperCase();
       res.status(200).json({ msg: `Payment confirmed: ${amount} ${currency}` });
-    } else {
+    } else if(session.payment_status === "unpaid") {
       // Handle other payment status (e.g. unpaid, canceled)
-      res.json({ msg: "you are not a paid user" });
+      res.status(201).json({ msg: "Your payment is incomplete",status:'unpaid' });
+    }
+    else if(session.payment_status === "canceled") {
+      // Handle other payment status (e.g. unpaid, canceled)
+      res.status(201).json({ msg: "Your payment has been canceled",status:'canceled' });
     }
   } catch (err) {
     console.error(err);
@@ -158,7 +175,6 @@ const cancelSubscription = async (req, res) => {
 //check user subscription
 async function checkUserPlan(req, res) {
   const {userId} = req.params;
-  console.log(userId)
 
 try {
     const user = await Userdb.findById(userId);
@@ -169,6 +185,7 @@ try {
       res.status(200).json({msg:'on trial',data:hasTrial})
     } else {
         const hasActiveSub = await checkActiveSubscription(customerId)
+        console.log(hasActiveSub,'active sub')
         if (hasActiveSub) {
           const getPlan = await getCustomerSubscription(customerId)
           res.status(200).json({msg:'plan retrieved',plan:getPlan})
@@ -179,6 +196,7 @@ try {
   
 
 } catch (error) {
+  console.log(error)
     res.status(500).json({msg:'something went wrong',error})
     
 }
@@ -186,7 +204,6 @@ try {
 }
 async function getPaymentMethod(req, res) {
     const {userId} = req.params;
-    console.log(userId)
   
   try {
       const user = await Userdb.findById(userId);

@@ -104,8 +104,14 @@ const botname = "Crbot";
 
 //socket function
 io.on("connection", (socket) => {
+
+  const userId = socket.handshake.query.userId;
+    // Set the user ID as a property of the socket object
+    socket.userId = userId;
+
   // socket.emit('connect',formatmsg(botname,' welcome to chatcord'))
   socket.on("joinRoom", ({ userid, roomid }) => {
+    
     socket.join(roomid);
     socket.emit("info", { userid, roomid });
     socket.emit("info", formatmsg(botname, " welcome to chatcord"));
@@ -115,19 +121,23 @@ io.on("connection", (socket) => {
     socket.on("chatMessage", async (message) => {
       try {
         const { recieverId, userId } = message;
+        console.log(message)
         //get sender username
         const user = await Userdb.findById(userId).populate(
           "registrationDataId"
         );
         const username = user.registrationDataId.userName;
         // Find the recipient's push subscription object
-        const reciever = await Userdb.findById(recieverId);
+        const reciever = await Userdb.findById(recieverId).populate(
+          "registrationDataId"
+        );
         const subscription = reciever?.subscription;
+
 
         // Create payload
         const payload = JSON.stringify({
           title: "New Message",
-          body: `You have a new message from ${username}`,
+          body: `${reciever.registrationDataId.userName} You have a new message from ${username}`,
         });
 
         // Send push notification
@@ -152,38 +162,57 @@ io.on("connection", (socket) => {
       socket.broadcast.to(roomid).emit("videoCall", formatmsg(userid, message));
     });
   });
-  socket.on("notification", async ({ from, reciever, message }) => {
+  socket.on("notification", async (notification) => {
+    const { from, reciever, message } = notification
     console.log("notify");
+    console.log(message,reciever)
+
     try {
+      // Update the recipient's notifications array in the database
       const user = await Userdb.findByIdAndUpdate(
         reciever,
-        { $push: { notifications: { from: from, message: message } } },
+        {
+          $push: {
+            notifications: {
+              from: from,
+              message: message,
+              notificationType: "message",
+            },
+          },
+        },
         { new: true }
       );
-      const recipientSockets = await io.in(reciever.toString()).fetchSockets();
-      recipientSockets.forEach((socket) => {
-        socket.emit("notification", { from: from, message: message });
-      });
+
+      const notify = socket.emit('notify',{from:from,to:reciever,message:message})
+        console.log(notify)
       console.log("notify done");
+      console.log(socket.userId,reciever,)
+
       // Find the recipient's push subscription object
       const recipient = await Userdb.findById(reciever);
+      // console.log(recipient,'recioient data')
       const subscription = recipient.subscription;
+      
 
-      // Create payload
-      const payload = JSON.stringify({
-        title: "New notification",
-        body: message,
-      });
-
-      // Send push notification
-      webPush
-        .sendNotification(subscription, payload)
-        .catch((err) => {
-          console.log(err);
-        })
-        .then(() => {
-          console.log("Push notification sent");
+      if (subscription) {
+        // Create payload
+        const payload = JSON.stringify({
+          title: "New notification",
+          body: message,
         });
+
+        // Send push notification
+        webPush
+          .sendNotification(subscription, payload)
+          .catch((err) => {
+            console.log(err);
+          })
+          .then(() => {
+            console.log("Push notification sent");
+          });
+      } else {
+        console.log("Recipient has no push subscription.");
+      }
     } catch (error) {
       console.log(error);
     }

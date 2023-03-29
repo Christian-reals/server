@@ -70,6 +70,41 @@ const getNotifications = async (req, res)=>{
   }
 }
 
+const deleteNotification = async (req, res)=>{
+  const { userId } = req.body;
+  const { notificationId } = req.params;
+
+  try {
+    await Userdb.findByIdAndUpdate(userId,{$pull:{notifications:{_id:notificationId}}})
+      .exec();
+    res.status(200).json({ msg: "Notification removed"});
+
+  } catch (error) {
+    res
+      .status(400)
+      .json({ msg: "unsucessfull: could not remove notication ", error });
+  }
+}
+
+const deleteMultipleNotifications = async (req, res)=>{
+  const  NotificationArray = req.body;
+  const { userId } = req.params;
+
+  try {
+    await NotificationArray.map(async (notification)=>{
+      await Userdb.findByIdAndUpdate(userId,{$pull:{notifications:{_id:notification._id}}})
+      .exec();
+    })
+
+    res.status(200).json({ msg: "Notification sremoved"});
+
+  } catch (error) {
+    res
+      .status(400)
+      .json({ msg: "unsucessfull: could not remove notications", error });
+  }
+}
+
 const createAvatar = async (req, res) => {
   upload(req, res, async (err) => {
     if (err) {
@@ -161,4 +196,6 @@ module.exports = {
   blockUser,
   createAvatar,
   getNotifications,
+  deleteNotification,
+  deleteMultipleNotifications
 };

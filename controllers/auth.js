@@ -96,13 +96,11 @@ const login = async (req, res) => {
         (await registrationDb.findOne({ email: emailOrId }));
 
       if (user) {
-        // console.log(user);
         const userValid = await bcrypt.compare(password, user.password);
         if (userValid) {
           const userProfile = await Userdb.findOne({
             registrationDataId: user._id,
           });
-          // console.log(userProfile,user._id)
           const id = userProfile._id;
           //
           const username = user.userName;

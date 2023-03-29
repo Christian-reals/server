@@ -10,7 +10,7 @@ const {
   likeEvents,
   deleteUserEvents,
 } = require("../controllers/events");
-const { getAccount, deleteAccount, getAllAccounts, blockUser, createAvatar, getUserBlockedAccounts, getNotifications } = require("../controllers/account");
+const { getAccount, deleteAccount, getAllAccounts, blockUser, createAvatar, getUserBlockedAccounts, getNotifications, deleteNotification, deleteMultipleNotifications } = require("../controllers/account");
 const {
   login,
   register,
@@ -86,6 +86,10 @@ route.get("/accounts/blockedAccounts/:userId", auth,getUserBlockedAccounts);
 route.put("/accounts/block/:id",auth,blockUser)
 route.post('/account/createAvatar',createAvatar)
 route.get('/account/notifications/:userId', getNotifications)
+route.put('/account/notifications/deleteOne/:notificationId', deleteNotification)
+route.put('/account/notifications/deleteMany/:userId', deleteMultipleNotifications)
+
+
 
 //auth
 route.post("/register", register);
@@ -100,10 +104,10 @@ route.get("/verifyToken", auth, verifyToken);
 
 //payments
 
-route.post('/payment/checkout',auth,createCheckout)
-route.get('/payment/checkPlan/:userId',auth,checkUserPlan)
-route.get('/payment/paymentMethod/:userId',auth,getPaymentMethod)
-route.post('/payment/checkPaymentStatus/:sessionId',auth,checkPaymentStatus)
+route.post('/payment/checkout',createCheckout)
+route.get('/payment/checkPlan/:userId',checkUserPlan)
+route.get('/payment/paymentMethod/:userId',getPaymentMethod)
+route.get('/payment/checkPaymentStatus/:userId',checkPaymentStatus)
 
 
 
