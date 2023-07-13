@@ -136,7 +136,7 @@ const login = async (req, res) => {
                 .json({
                   msg: "You have not verified your email account",
                 })
-                .redirect(`http://127.0.0.1:5173//verify/?email=${user.email}&username=${user.userName}`,);
+                // .redirect(`/verify/?email=${user.email}&username=${user.userName}`,);
 
               default:
                 break;

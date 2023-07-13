@@ -45,8 +45,8 @@ const createCheckout = async (req, res) => {
         },
       ],
       subscription_data: {},
-      success_url: `${baseUrl}/sucess`,
-      cancel_url: `${baseUrl}/dashboard/payments`,
+      success_url: `${remoteUrl}/sucess`,
+      cancel_url: `${remoteUrl}/dashboard/payments`,
     });
 
     const checkout = await CheckoutSession.create({

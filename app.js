@@ -11,11 +11,13 @@ require("./db/connectdb");
 const dotenv = require("dotenv");
 const cors = require("cors");
 const { Userdb } = require("./models/userdb");
-// const { ExpressPeerServer } = require("peer");
+const { ExpressPeerServer } = require("peer");
 const server = http.createServer(app);
 const webPush = require("web-push");
 
 const expressLogging = require("express-logging");
+
+
 
 const logger = require("logops");
 const { sendNotificationEmail } = require("./utils/mailer");
@@ -40,15 +42,17 @@ app.use(cors());
 app.use("/", route);
 app.use("/admin", adminRoutes);
 
-// //SETTING PEER SERVER
-// const peerServer = ExpressPeerServer(server, {
-//   debug: true,
-//   path: "/", // change 'myapp' to whatever path you'd like to use
-// });
+//SETTING PEER SERVER
+const peerServer = ExpressPeerServer(server, {
+  debug: true,
+  path: "/", // peer path
+});
 
-// app.use("/peerjs", peerServer); // endpoint for connecting to PeerJS server
+app.use("/peerjs", peerServer); // endpoint for connecting to PeerJS server
 
-//setting up web-push
+
+
+// setting up web-push
 
 webPush.setVapidDetails(
   "mailto:ayomikunfaluyi@gmail.com",
@@ -123,7 +127,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("callUser", ({ userToCall, signalData, from, name }) => {
-    console.log("calling", userToCall, from);
+    console.log("calling", userToCall, from,signalData);
     socket.emit("callUser", { to: userToCall, signal: signalData, from, name });
   });
 
@@ -179,6 +183,9 @@ io.on("connection", (socket) => {
 
       socket.broadcast.to(roomid).emit("message", formatmsg(userid, message));
     });
+    socket.on('changeEvent',(event) =>{
+
+    })
     socket.on("videoCall", (message) => {
       socket.broadcast.to(roomid).emit("videoCall", formatmsg(userid, message));
     });

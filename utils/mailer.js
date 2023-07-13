@@ -509,7 +509,7 @@ const sendEventRegistrationEmail = async (email, event) => {
   // Send the email
   let info = await transporter.sendMail(mailOptions);
 };
-const sendNotificationEmail = async (email,message,notificationType,sender,SenderAvatar,date) => {
+const sendNotificationEmail = async (email,message,notificationType,sender,senderAvatar,date) => {
   // Create a transport object for sending email
   let transporter = nodemailer.createTransport({
     service:"gmail",
@@ -616,7 +616,7 @@ const sendNotificationEmail = async (email,message,notificationType,sender,Sende
                 <tr>
                   <td style="padding:30px;background-color:#ffffff;">
                     <h1 style="margin-top:0;margin-bottom:1.38em;font-size:1.953em;line-height:1.3;font-weight:bold;letter-spacing:-0.02em;">New Notification</h1>
-                    <img width="2170" alt="Doppler Health" style="width:2170px;max-width:80%;height:auto;border:none;text-decoration:none;color:#ffffff;" src=${SenderAvatar} alt=${sender}>
+                    <img width="2170" alt="Doppler Health" style="width:2170px;max-width:80%;height:auto;border:none;text-decoration:none;color:#ffffff;" src=${senderAvatar} alt=${sender}>
                     <p>${message}</p>
                     <p> ${new Date(date).toDateString()}</p>
                     <p>Please Ignore if this message is not for you.</p>
