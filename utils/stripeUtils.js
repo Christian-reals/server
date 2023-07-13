@@ -76,14 +76,18 @@ async function hasTrialPeriod(subscriptionId) {
   }
 }
 
-async function getCustomerSubscription(customerId) {
-  console.log(customerId,'customer')
+async function getCustomerSubscription(customerId,subscriptionId) {
+  console.log(customerId,subscriptionId,'customer')
   try {
     const customer = await stripe.customers.retrieve(customerId);
-    const subscription = await stripe.subscriptions.retrieve(customer.subscriptions.data[0].id);
-    const currentPlan = subscription.plan.id;
-    const currentPeriodEnd = subscription.current_period_end;
+    console.log(customer,)
+    const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+    const currentPlan = subscription?.plan?.id;
+    const currentPeriodEnd = subscription?.current_period_end;
+    console.log(currentPlan,currentPeriodEnd)
+
     return { currentPlan, currentPeriodEnd };
+
   } catch (error) {
     console.error(error);
     throw error;

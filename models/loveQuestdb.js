@@ -22,7 +22,8 @@ const loveQuestAnswer = new mongoose.Schema(
         ref:'users'
       },
     respondentRole: {
-      type: String
+      type: String,
+      default:'Admin/Love Expert'
     },
     respondent:{
         type: String,
@@ -30,7 +31,17 @@ const loveQuestAnswer = new mongoose.Schema(
     authorImgUrl: {
       type: String,
     },
-    likes: { type: Number, default: 0 },
+    likes:[{
+      from:      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Users",
+        required:true
+      },
+      date:{
+        type: Date,
+        default: Date.now()
+      },
+    }],
   },
   {
     timestamps: true,

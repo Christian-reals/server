@@ -28,8 +28,10 @@ const upload = multer({
 const createEvent = async (req, res) => {
   console.log(path.basename(__dirname));
   upload(req, res, async (err) => {
-    console.log(req.file);
-    if (req.body && req.file) {
+    console.log(req.file,'file');
+    console.log(req.body,'body');
+
+    if (req.body || req.file) {
       if (err) {
         res.status(401).json({ msg: "fields are not correctly filled", err });
       } else {
@@ -44,13 +46,13 @@ const createEvent = async (req, res) => {
           //     data: fs.readFileSync(path.join(dirname + 'tmp/uploads/' + req.file.filename)),
           //     contentType: 'image/*'
           // },
-          imageUrl: path.join(dirname + "tmp/uploads/" + req.file.filename),
+          imageUrl:req?.file&& path.join(dirname + "tmp/uploads/" + req?.file.filename),
         });
         try {
           await event.save(event);
           res.status(201).json({ msg: "event created successfully" });
         } catch (error) {
-          res.json({ msg: "event creation is not successful", error: error });
+          res.status(500).json({ msg: "event creation is not successful", error: error });
         }
       }
     } else {
@@ -61,9 +63,9 @@ const createEvent = async (req, res) => {
 
 const getAllEvents = async (req, res) => {
   try {
-    const events = await EventDb.find({}).lean();
+    const events = await EventDb.find({}).populate('attendee').lean();
 
-    res.status(200).json(events);
+    res.status(200).json({events,msg:'events found'});
   } catch (error) {
     res.status(404).json({ msg: "failed: unable to process request", error });
   }
@@ -81,7 +83,6 @@ const getEvent = async (req, res) => {
 const getUserEvents = async (req, res) => {
   const { userId } = req.params;
   try {
-    console.log("strat");
     const user = await Userdb.findOne({ _id: userId })
       .populate("events")
       .exec();
@@ -99,17 +100,51 @@ const getUserEvents = async (req, res) => {
 
 const updateEvent = async (req, res) => {
   const { id } = req.params;
+  console.log(req.body,'body')
   try {
-    const updatedEvent = await EventDb.findByIdAndUpdate(id, req.body);
+    upload(req, res, async (err) => {
+      console.log(req.file);
+      if (req.body || req.file) {
+        if (err) {
+          res.status(401).json({ msg: "fields are not correctly filled", err });
+        } else {
+          const { title, category, venue, description, date } = req.body;
+          const update = {
+            title: title,
+            category: category,
+            venue: venue,
+            description: description,
+            date: date,
+            // image:{
+            //     data: fs.readFileSync(path.join(dirname + 'tmp/uploads/' + req.file.filename)),
+            //     contentType: 'image/*'
+            // },
+            imageUrl: req.file && path.join(dirname + "tmp/uploads/" + req.file.filename),
+          };
+          const updatedEvent = await EventDb.findByIdAndUpdate(id, update);
+          console.log(updatedEvent)
+          res.status(200).json({ msg: "event updated"});
+        }
+      } else {
+        res.status(404).json({ msg: "request body cannot be empty" });
+      }
+    });
+
   } catch (error) {
-    res.send(error);
+    console.log(error)
+    res.status(500).json({ msg: "event creation is not successful", error: error });
+
   }
 };
 
-const deleteEvent = (req, res) => {
+const deleteEvent = async (req, res) => {
   const { id } = req.params;
+  console.log(id)
   try {
-    const deletedEvent = EventDb.findByIdAndDelete(id);
+    const deletedEvent = await EventDb.findByIdAndDelete(id);
+    console.log(deletedEvent)
+    res.status(200).json({ msg: "event deleted", });
+
   } catch (error) {
     res.status(422).json({ msg: "unable to delete event", error });
   }
@@ -141,25 +176,27 @@ const registerEvents = async (req, res) => {
     if (userRegistered.length > 0) {
       res.status(201).json({ msg: "event already exists" });
     } else {
-      const event = await EventDb.findOneAndUpdate(
-        { _id: id },
-        { $push: { participants: userId } }
-      ).exec();
+      const event = await EventDb.findOne({ _id: id, participants: { $ne: userId } }).exec();
       if (event) {
+        await EventDb.findOneAndUpdate(
+          { _id: id },
+          { $push: { participants: userId } }
+        ).exec();
         await Userdb.findOneAndUpdate(
           { _id: userId },
           { $push: { events: id } }
         ).exec();
         sendEventRegistrationEmail(user?.registrationDataId?.email, event);
-        res.status(200).json({ msg: "event registration sucessful" });
+        res.status(200).json({ msg: "event registration successful" });
       } else {
-        res.status(400).json({ msg: "event was not found" });
+        res.status(400).json({ msg: "event was not found or user has already registered" });
       }
     }
   } catch (error) {
     res.status(400).json({ msg: "event registration failed", error });
   }
 };
+
 
 const deleteUserEvents = async (req, res) => {
   const { id } = req.params;

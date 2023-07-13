@@ -58,6 +58,41 @@ const createMeetup = async (req, res) => {
   });
 };
 
+const adminCreateMeetup = async (req, res) => {
+  upload(req, res, async (err) => {
+    console.log(req.file);
+    if (req.body && req.file) {
+      if (err) {
+        res.status(401).send(err);
+      } else {
+        const { title, category, venue, description, date } = req.body;
+        console.log(dirname);
+        const meetup = new MeetupDb({
+          title: title,
+          category: category,
+          venue: venue,
+          description: description,
+          date: date,
+          // image:{
+          //     data: fs.readFileSync(path.join(dirname + 'tmp/uploads/' + req.file.filename)),
+          //     contentType: 'image/*'
+          // },
+          imageUrl: path.join(dirname + "tmp/uploads/" + req.file.filename),
+        });
+        try {
+          meetup.isApproved = true
+          await meetup.save(meetup);
+          res.status(201).json({ msg: "meetup created successfully" });
+        } catch (error) {
+          res.json({ msg: "meetup creation is not successful", error: error });
+        }
+      }
+    } else {
+      res.status(404).json({ msg: "request body cannot be empty" });
+    }
+  });
+};
+
 const getAllMeetups = async (req, res) => {
   try {
     const meetups = await MeetupDb.find({}).lean();
@@ -92,19 +127,65 @@ const getUserMeetups = async (req, res) => {
 
 const updateMeetup = async (req, res) => {
   const { id } = req.params;
+  console.log(req.body,'body')
   try {
-    const updatedmeetup = await MeetupDb.findByIdAndUpdate(id, req.body);
+    upload(req, res, async (err) => {
+      console.log(req.file);
+      if (req.body || req.file) {
+        if (err) {
+          res.status(401).json({ msg: "fields are not correctly filled", err });
+        } else {
+          const { title, category, venue, description, date } = req.body;
+          const update = {
+            title: title,
+            category: category,
+            venue: venue,
+            description: description,
+            date: date,
+            // image:{
+            //     data: fs.readFileSync(path.join(dirname + 'tmp/uploads/' + req.file.filename)),
+            //     contentType: 'image/*'
+            // },
+            imageUrl: req.file && path.join(dirname + "tmp/uploads/" + req.file.filename),
+          };
+          const updatedMeetup = await MeetupDb.findByIdAndUpdate(id, update);
+          console.log(updatedMeetup)
+          res.status(200).json({ msg: "meetup updated"});
+        }
+      } else {
+        res.status(404).json({ msg: "request body cannot be empty" });
+      }
+    });
+
   } catch (error) {
-    res.send(error);
+    console.log(error)
+    res.status(500).json({ msg: "meetup creation is not successful", error: error });
+
   }
 };
 
-const deleteMeetup = (req, res) => {
+const deleteMeetup = async (req, res) => {
   const { id } = req.params;
+  console.log(id)
   try {
-    const deletedmeetup = MeetupDb.findByIdAndDelete(id);
+    const deletedMeetup = await MeetupDb.findByIdAndDelete(id);
+    console.log(deletedMeetup)
+    res.status(200).json({ msg: "meetup deleted", });
+
   } catch (error) {
     res.status(422).json({ msg: "unable to delete meetup", error });
+  }
+};
+
+const approveMeetup = async (req, res) => {
+  const { id } = req.params;
+  console.log(id)
+  try {
+    const meetup = await MeetupDb.findByIdAndUpdate(id,{$set:{isApproved:true}});
+    res.status(200).json({ msg: "meetup approved", });
+
+  } catch (error) {
+    res.status(422).json({ msg: "unable to approve meetup", error });
   }
 };
 
@@ -132,6 +213,23 @@ const registerMeetups = async (req, res) => {
       { _id: userId },
       { $push: { meetups: id } }
     ).exec();
+    res.status(201).json({ msg: "successful" });
+  } catch (error) {
+    res.send(error);
+  }
+};
+const unregisterMeetups = async (req, res) => {
+  const { id } = req.params;
+  const { userId } = req.body;
+  try {
+    await MeetupDb.findOneAndUpdate(
+      { _id: id },
+      { $pull: { participants: userId } }
+    ).exec();
+    await Userdb.findOneAndUpdate(
+      { _id: userId },
+      { $pull: { meetups: id } }
+    ).exec();
     res.status();
   } catch (error) {
     res.send(error);
@@ -147,4 +245,7 @@ module.exports = {
   deleteMeetup,
   updateMeetup,
   getUserMeetups,
+  adminCreateMeetup,
+  approveMeetup,
+  unregisterMeetups,
 };

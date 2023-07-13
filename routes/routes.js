@@ -10,7 +10,7 @@ const {
   likeEvents,
   deleteUserEvents,
 } = require("../controllers/events");
-const { getAccount, deleteAccount, getAllAccounts, blockUser, createAvatar, getUserBlockedAccounts, getNotifications, deleteNotification, deleteMultipleNotifications } = require("../controllers/account");
+const { getAccount, deleteAccount, getAllAccounts, blockUser, createAvatar, getUserBlockedAccounts, getNotifications, markNotificationAsSeen, markManyNotificationsAsSeen, likeAccount, unlikeAccount, addFriend, removeFriend, getAllAccountsMail, uploadImages, deleteUserImage } = require("../controllers/account");
 const {
   login,
   register,
@@ -46,6 +46,7 @@ const {
   deleteMeetup,
   updateMeetup,
   getUserMeetups,
+  unregisterMeetups,
 } = require("../controllers/meetups");
 const {
   createDiscussion,
@@ -65,8 +66,11 @@ const {
   getLoveQuest,
   dislikeLoveQuest,
 } = require("../controllers/loveQuest");
-const { verifyResetPasswordToken } = require("../middleware/jwt");
-const { createCheckout, checkUserPlan, checkPaymentStatus, getPaymentMethod } = require("../controllers/stripe");
+const { verifyResetPasswordToken, adminAuthMiddleware } = require("../middleware/jwt");
+const { createCheckout, checkUserPlan, checkPaymentStatus, getPaymentMethod, stripeWebhook } = require("../controllers/stripe");
+const { singleImage, userImages } = require("../middleware/handleImageUpload");
+const { adminGetAllLoveQuests } = require("../controllers/admin");
+const { createFeedback, getAllFeedback, getFeedbackById, deleteFeedbackById, replyFeedback, editReply } = require("../controllers/feedback");
 //auth middleware
 const auth = require("../middleware/jwt").authMiddleware;
 const verify = require("../middleware/jwt").verifyToken;
@@ -80,14 +84,28 @@ route.get("/", (req, res) => {
 
 //acount
 route.post("/account/delete", auth, deleteAccount);
+//get a single account 
 route.get("/account/:userId", getAccount);
-route.get("/accounts", auth,getAllAccounts);
+// get all accounts
+route.get("/accounts",getAllAccounts);
+//get a list of all verified mails
+route.get("/accounts/mail",getAllAccountsMail);
+//get blocked accounts
 route.get("/accounts/blockedAccounts/:userId", auth,getUserBlockedAccounts);
 route.put("/accounts/block/:id",auth,blockUser)
-route.post('/account/createAvatar',createAvatar)
+route.put("/account/like/:accountId",auth,likeAccount)
+route.put("/account/unLike/:accountId",auth,unlikeAccount)
+route.put("/account/addFriend/:friendId",auth,addFriend)
+route.put("/account/removeFriend/:friendId",auth,removeFriend)
+//avatar
+route.post('/account/createAvatar',auth,singleImage,createAvatar)
+//upload images
+route.post("/account/upload-images", auth,userImages, uploadImages);
+//delete user Images
+route.put('/account/delete-user-image/:id',auth,deleteUserImage)
 route.get('/account/notifications/:userId', getNotifications)
-route.put('/account/notifications/deleteOne/:notificationId', deleteNotification)
-route.put('/account/notifications/deleteMany/:userId', deleteMultipleNotifications)
+route.put('/account/notifications/mark/:notificationId', markNotificationAsSeen)
+route.put('/account/notifications/markMany/:userId', markManyNotificationsAsSeen)
 
 
 
@@ -108,19 +126,22 @@ route.post('/payment/checkout',createCheckout)
 route.get('/payment/checkPlan/:userId',checkUserPlan)
 route.get('/payment/paymentMethod/:userId',getPaymentMethod)
 route.get('/payment/checkPaymentStatus/:userId',checkPaymentStatus)
+route.post('/payment/webhook',stripeWebhook)
+
+
 
 
 
 //Events
-route.post("/event", auth, createEvent);
+route.post("/event", adminAuthMiddleware, createEvent);
 route.get("/event",auth, getAllEvents);
 route.get("/event/:id", auth, getEvent);
 route.get("/event/myEvents/:userId",auth,getUserEvents);
 route.post("/event/register/:id",auth, registerEvents);
 route.post("/event/delete/:id",auth, deleteUserEvents);
 route.get("/event/like/:id", auth,likeEvents);
-route.put("/event/:id", auth, updateEvent);
-route.delete("/event/:id", auth, deleteEvent);
+route.put("/event/:id", adminAuthMiddleware, updateEvent);
+route.delete("/event/:id", adminAuthMiddleware, deleteEvent);
 
 //Meetups
 route.post("/meetup", auth, createMeetup);
@@ -129,24 +150,32 @@ route.get("/meetup/:id", auth, getMeetup);
 route.get("/meetup/myMeetups/:userId", auth,getUserMeetups);
 route.post("/meetup/register/:id", auth,registerMeetups);
 route.get("/meetup/like/:id", auth,likeMeetups);
-route.put("/meetup/:id", auth, updateMeetup);
-route.delete("/meetup/:id", auth, deleteMeetup);
+route.put("/meetup/delete/:id",auth, unregisterMeetups);
+route.put("/meetup/:id", adminAuthMiddleware, updateMeetup);
+route.delete("/meetup/:id", adminAuthMiddleware, deleteMeetup);
+
+
+//Feedbacks
+route.post("/feedback", auth, createFeedback);
+route.get("/feedback", adminAuthMiddleware,getAllFeedback);
+route.get("/feedback/:id", adminAuthMiddleware, getFeedbackById);
+route.put("/feedback/reply:id", adminAuthMiddleware, replyFeedback);
+route.put("/feedback/reply/edit:id", adminAuthMiddleware, editReply);
+route.delete("/feedback/:id", adminAuthMiddleware,deleteFeedbackById);
 
 // discussion
-route.post("/discussion",auth, createDiscussion);
-route.get("/discussion", auth,getAllDiscussions);
 route.get("/discussion/:id", auth,getDiscussion);
 route.post("/discussion/react/:id",auth, reactToDiscussion);
 route.post("/discussion/reply/:id",auth, replyDiscussion);
-route.put("/discussion/:id", auth, updateDiscussion);
-route.delete("/discussion/:id", auth, deleteDiscussion);
+route.get("/discussion",auth, getAllDiscussions);
+
 
 //lovequest
 route.post("/lovequest",auth, createLoveQuest);
-route.get("/lovequest",auth, getAllLoveQuests);
+route.get("/lovequest",getAllLoveQuests);
 route.get("/lovequest/:id",auth, getLoveQuest);
-route.get("/lovequest/like/:id",auth,likeLoveQuest);
-route.get("/lovequest/dislike/:id",auth,dislikeLoveQuest)
+route.put("/lovequest/like/:id",auth,likeLoveQuest);
+route.put("/lovequest/dislike/:id",auth,dislikeLoveQuest)
 route.put("/lovequest/:id", auth, updateLoveQuest);
 route.delete("/lovequest/:id", auth, deleteLoveQuest);
 
@@ -164,7 +193,7 @@ route.delete("/chat/:id", auth, deleteChat);
 route.delete("/chat/:chatId/message/:messageId",auth, deleteChatMessage);
 route.put("/chat/delete/:id",auth, deleteUserChat);
 route.put("/chat/block/:id", auth,blockChat);
-route.put("/chat/unblock/", auth,unBlockChat);
+route.put("/chat/unblock/:friendId", auth,unBlockChat);
 
 
 

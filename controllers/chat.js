@@ -87,7 +87,8 @@ const createMessage = async (req, res) => {
           ).exec();
           res.status(201).json({ msg: "text message created successfully" });
         } catch (error) {
-          res.status(401).json({
+          console.log(error)
+          res.status(400).json({
             msg: "text message creation is not successful",
             error: error,
           });
@@ -101,14 +102,16 @@ const createMessage = async (req, res) => {
 const createChat = async (req, res) => {
   try {
     const { recieverId, userId } = req.body;
+    console.log(userId)
 
     if (recieverId && userId) {
-      const user = await Userdb.findById(userId)
-      const chatExists = user.friends.filter((friend)=>{
-        return friend?.friend?.toString() == recieverId
+      const user = await Userdb.findById(userId).populate('chats')
+      const chatExists = user.chats.filter((chat)=>{
+        console.log(chat)
+        return chat?.members?.filter((member)=>member.toString()==recieverId)
       })
       if (chatExists.length>0) {
-        res.status(301).json({msg:"chat already exists"})
+        res.status(301).json({msg:"chat already exists",chatExists})
       } else {
         const chat = new Chatdb({
           members: [
@@ -162,16 +165,19 @@ const getUserChats = async (req, res) => {
       // Get receiver data for each chat
       const chatData = await Promise.all(
         chats.map(async (chat) => {
+          console.log(chat,'chat')
           const recieverId = chat.members.filter((member) => {
+            console.log(member,'member')
             return member.toString() != user._id;
           });
-          if (recieverId) {
-            console.log(recieverId)
-            const reciever = await Userdb.findById(recieverId)
+          if (recieverId[0]) {
+            console.log(recieverId[0].toString(),'reciever id')
+            const reciever = await Userdb.findById(recieverId[0])
               .populate("registrationDataId")
               .exec();
-            const { userName } = reciever.registrationDataId;
-            const { avatar } = reciever;
+              console.log(reciever?.registrationDataId,'reciever')
+            const  userName  = reciever?.registrationDataId?.userName;
+            const  avatar  = reciever?.avatar;
             // Get last message
             const chatMessage = await Chatdb.findById(chat._id)
               .populate("messages")
@@ -293,17 +299,19 @@ const blockChat = async (req, res) => {
 
 const unBlockChat = async (req, res) => {
   const {userId} = req.body
-const chat = await Chatdb.find({ members: { $in: [userId] } })
-
-  const friendId  = chat.members.filter((member)=>{return member != userId  })
-  await Userdb.updateOne(
-    { _id: userId },
-    { $pull: { blockedChats: chat._id.toString() }}
-  );
-  await Userdb.updateOne(
+  const {friendId} = req.params
+  console.log(friendId)
+  try {
+      await Userdb.updateOne(
     { _id: userId },
     { $set: { "friends.$[elem].blocked": false } }, { arrayFilters: [{ "elem.friend": friendId  }] }
   );
+  res.status(200).json({msg:'user unblocked'})
+  } catch (error) {
+  res.status(500).json({msg:'error: request unsucessful'})
+    
+  }
+
 };
 
 const updateMessage = async (req, res) => {

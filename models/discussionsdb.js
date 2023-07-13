@@ -16,6 +16,7 @@ const discussion = new mongoose.Schema({
     authorRole:{
         type:String,
         required:['authorRole can not be empty'],
+        default:'Admin'
     },
     authorImgUrl:{
         type:String
@@ -32,6 +33,17 @@ const discussion = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref:'Comments'
     }],
+    likes:[{
+        from:      {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Users",
+          required:true
+        },
+        date:{
+          type: Date,
+          default: Date.now()
+        },
+      }],
 },
 {
     timestamps:true

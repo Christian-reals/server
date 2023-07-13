@@ -59,30 +59,50 @@ const updateLoveQuest = async (req, res) => {
 };
 const likeLoveQuest = async (req, res) => {
   const { id } = req.params;
+  const {userId} = req.body
   try {
     const liked = await loveQuestdb
-      .findOneAndUpdate({ _id: id }, { $inc: { likes: 1 } })
-      .exec();
+      .findOneAndUpdate({ _id: id }, { $push: {likes:{from:userId}} })
     if (liked) {
       res.status(200).json({ msg: "request sucessfull" });
     }
   } catch (error) {
+    console.log(error)
     res.status(400).json({ msg: "request not sucessfull", error });
   }
 };
 const dislikeLoveQuest = async (req, res) => {
     const { id } = req.params;
+  const {userId} = req.body
+
     try {
       const liked = await loveQuestdb
-        .findOneAndUpdate({ _id: id }, { $: { likes: -1 } })
-        .exec();
+        .findOneAndUpdate({ _id: id }, { $pull: {likes:{from:userId}} })
       if (liked) {
         res.status(200).json({ msg: "request sucessfull" });
       }
     } catch (error) {
+      console.log(error)
       res.status(400).json({ msg: "request not sucessfull", error });
     }
   };
+  
+  const answerQuestion = async (req, res) => {
+    const { answer } = req.body;
+    const { id } = req.params;
+    try {
+      const question = await loveQuestdb.findByIdAndUpdate(
+        id,
+        { ...req.body},
+        { new: true }
+      );
+      res.status(200).json({msg:'question answered', success: true, question });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({msg:'question not  answered', success: false, error: error.message });
+    }
+  };
+  
 
 module.exports = {
   createLoveQuest,
@@ -92,4 +112,5 @@ module.exports = {
   likeLoveQuest,
   getLoveQuest,
   dislikeLoveQuest,
+  answerQuestion,
 };

@@ -3,6 +3,8 @@ const { Userdb, registrationDb } = require("../models/userdb");
 const fs = require("fs");
 const path = require("path");
 const multer = require("multer");
+const { default: mongoose } = require("mongoose");
+const Notifications = require("../models/notification");
 
 //getting the directory outside controller
 const dirnamearr = __dirname.split(`\\`);
@@ -44,11 +46,13 @@ const getUserBlockedAccounts = async (req, res) => {
   try {
     const user = await Userdb.findById(userId)
       .populate({
-        path: "blockedChats",
+        path: "friends.friend",
         populate: { path: "registrationDataId" },
       })
       .exec();
-    res.status(200).json({ msg: "success", data: user.blockedChats });
+    const blocked = user.friends.filter((friend) => friend.blocked===true);
+    console.log(blocked);
+    res.status(200).json({ msg: "success", data: blocked });
   } catch (error) {
     res
       .status(400)
@@ -56,83 +60,149 @@ const getUserBlockedAccounts = async (req, res) => {
   }
 };
 
-const getNotifications = async (req, res)=>{
+const getNotifications = async (req, res) => {
   const { userId } = req.params;
   try {
-    const user = await Userdb.findById(userId).populate('notifications.from')
-      .exec();
-    res.status(200).json({ msg: "success", data: user.notifications });
-
+    const notifications = await Notifications.find({ to: userId }).populate(
+      "from to"
+    ).sort('date');
+    res.status(200).json({ msg: "success", notifications });
   } catch (error) {
     res
       .status(400)
       .json({ msg: "unsucessfull: could not fetch notications", error });
   }
-}
+};
 
-const deleteNotification = async (req, res)=>{
+
+const markNotificationAsSeen = async (req, res) => {
+  const { notificationId } = req.params; // Assuming the notification ID is provided as a URL parameter
   const { userId } = req.body;
-  const { notificationId } = req.params;
+
+  console.log(notificationId,userId,'Notification')
 
   try {
-    await Userdb.findByIdAndUpdate(userId,{$pull:{notifications:{_id:notificationId}}})
-      .exec();
-    res.status(200).json({ msg: "Notification removed"});
+    const user = await Userdb.findById(userId); // Assuming the authenticated user's ID is available in req.userId
+    if (user) {
+      // Find the notification by ID in the user's notifications array
+      const notification = await  Notifications.findByIdAndUpdate(notificationId, {
+        $set: { seen: true },
+      });
+      console.log(notification)
+      if (!notification) {
+        return res.status(404).json({ message: "Notification not found" });
+      }
 
+      return res.status(200).json({ message: "Notification marked as seen",notification });
+    }
+    else{
+      return res.status(400).json({ message: "User not found"});
+      
+    }
   } catch (error) {
-    res
-      .status(400)
-      .json({ msg: "unsucessfull: could not remove notication ", error });
+    console.log(error);
+    res.status(500).json({ message: "Internal server error" });
   }
-}
+};
 
-const deleteMultipleNotifications = async (req, res)=>{
-  const  NotificationArray = req.body;
+const markManyNotificationsAsSeen = async (req, res) => {
   const { userId } = req.params;
+  const notificationIds = req.body; // Assuming an array of notification IDs is provided in the request body
 
   try {
-    await NotificationArray.map(async (notification)=>{
-      await Userdb.findByIdAndUpdate(userId,{$pull:{notifications:{_id:notification._id}}})
-      .exec();
-    })
+    const user = await Userdb.findById(userId).exec();
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
-    res.status(200).json({ msg: "Notification sremoved"});
+    await Promise.all(
+      notificationIds.map(async (notificationId) => {
+        // Find the notification by ID in the user's notifications array
+        const notification = await Notifications.findByIdAndUpdate(
+          notificationId,
+          { $set: { seen: true } }
+        );
+        if (!notification) {
+          return res.status(404).json({ message: "Notification not found" });
+        }
+      })
+    );
 
+    res.status(200).json({ message: "Notifications marked as seen" });
   } catch (error) {
-    res
-      .status(400)
-      .json({ msg: "unsucessfull: could not remove notications", error });
+    res.status(400).json({
+      message: "Unsuccessful: Could not mark notifications as seen",
+      error: error.message,
+    });
   }
-}
+};
+
 
 const createAvatar = async (req, res) => {
-  upload(req, res, async (err) => {
-    if (err) {
-      res.status(401).send(err);
-    } else {
-      if (req.file) {
-        console.log(req.file);
-        const { userId } = req.body;
-        try {
-          await Userdb.findByIdAndUpdate(
-            userId,
-            {
-              $set: {
-                avatar: path.join(dirname + "tmp/uploads/" + req.file.filename),
-              },
-            },
-            { new: true }
-          );
-          res.status(201).json({ msg: "avatar created successfully" });
-        } catch (error) {
-          res.json({ msg: "avatar creation is not successful", error: error });
-        }
-      } else {
-        res.status(400).json({ msg: "error" });
-      }
+  if (req.file) {
+    console.log(req.file.path);
+    const { userId } = req.body;
+    try {
+      await Userdb.findByIdAndUpdate(
+        userId,
+        {
+          $set: {
+            avatar: path.join(req.file.path),
+          },
+        },
+        { new: true }
+      );
+      res
+        .status(201)
+        .json({ msg: "avatar created successfully", path: req.file.path });
+    } catch (error) {
+      res.json({ msg: "avatar creation is not successful", error: error });
     }
-  });
+  } else {
+    res.status(400).json({ msg: "error" });
+  }
 };
+
+const uploadImages = async function (req, res) {
+  try {
+    const { id } = req.user;
+    console.log(id, "id", "Im not sure we are running");
+
+    await req?.files?.map(async (file) => {
+      const newImage = { url: file.path, id: new mongoose.Types.ObjectId() };
+      const user = await Userdb.findByIdAndUpdate(id, {
+        $push: { userImages: newImage },
+      });
+    });
+
+    return res.status(201).json({ message: "Image(s) uploaded sucessfully" });
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(500)
+      .json({ message: "Image(s) not uploaded sucessfully", error });
+  }
+};
+
+const deleteUserImage = async function (req, res) {
+  const { userId } = req.body;
+
+  const { id } = req.params;
+  try {
+    Userdb.updateOne(
+      { _id: userId },
+      { $pull: { userImages: { id: id } } }
+    ).then((user) => {
+      console.log(user.userImages, "user images");
+      return res.status(201).json({ message: "Image(s) deleted sucessfully" });
+    });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Image(s) not deleted sucessfully" });
+  }
+};
+
 const blockUser = async (req, res) => {
   const { userId } = req.body;
   const { id } = req.params;
@@ -146,6 +216,24 @@ const getAllAccounts = async (req, res) => {
       .populate("registrationDataId")
       .exec();
     res.status(200).json({ msg: "success", data: users });
+  } catch (error) {
+    res.status(400).json({ msg: "unsucessfull: could not users" });
+  }
+};
+
+const getAllAccountsMail = async (req, res) => {
+  try {
+    const users = await Userdb.find()
+      .lean() //$and : {[{isBanned:false},{isSuspended:false}]}
+      .populate("registrationDataId")
+      .exec();
+
+    const emails = users.map((user, i) => {
+      if (user.registrationDataId.email_verified) {
+        return { index: i, email: user.registrationDataId.email };
+      }
+    });
+    res.status(200).json({ msg: "success", data: users, emails });
   } catch (error) {
     res.status(400).json({ msg: "unsucessfull: could not users" });
   }
@@ -187,6 +275,120 @@ const deleteAccount = async (req, res) => {
 };
 
 const suspendAccount = async (req, res) => {};
+const likeAccount = async (req, res) => {
+  const { accountId } = req.params;
+  const { userId } = req.body;
+  try {
+    const account = await Userdb.findById(accountId);
+    const hasLiked = account?.likes?.some((like) => like?.from?.equals(userId));
+
+    if (hasLiked) {
+      res.status(400).json({ msg: "you have already liked this account" });
+    } else {
+      const like = {
+        from: userId,
+      };
+
+      // Update the recipient's notifications array in the database
+      const user = await Userdb.findByIdAndUpdate(
+        accountId,
+        {
+          $push: {
+            likes: like,
+          },
+        },
+        { new: true }
+      );
+
+      console.log(user);
+
+      res.status(200).json({ msg: "account liked", likes: user.likes });
+    }
+  } catch (error) {
+    console.log(error);
+    res
+      .status(500)
+      .json({ msg: "something went wrong: could not like account" });
+  }
+};
+
+const unlikeAccount = async (req, res) => {
+  const { accountId } = req.params;
+  const { userId } = req.body;
+  try {
+    // Update the recipient's notifications array in the database
+    const user = await Userdb.findByIdAndUpdate(
+      accountId,
+      {
+        $pull: {
+          likes: {
+            from: userId,
+          },
+        },
+      },
+      { new: true }
+    );
+    res.status(200).json(user);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Error unliking account" });
+  }
+};
+
+const addFriend = async (req, res) => {
+  const { friendId } = req.params;
+  const { userId } = req.body;
+
+  try {
+    const user = await Userdb.findById(userId).populate("friends.friend");
+    const friendExists = user.friends.some((friend) => {
+      return friend.friend._id.toString() === friendId;
+    });
+    if (friendExists) {
+      res.status(400).json({ msg: "Friend already exists" });
+    } else {
+      const updatedUser = await Userdb.findByIdAndUpdate(
+        userId,
+        { $addToSet: { friends: { friend: friendId } } },
+        { new: true }
+      ).populate("friends.friend");
+
+      res.status(200).json({ msg: "Friend added", data: updatedUser.friends });
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ msg: "Error adding friend", error });
+  }
+};
+const removeFriend = async (req, res) => {
+  const { friendId } = req.params;
+  const { userId } = req.body;
+
+  try {
+    const user = await Userdb.findByIdAndUpdate(
+      friendId,
+      { $pull: { friends: { friend: userId } } },
+      { new: true }
+    ).populate("friends.friend");
+
+    res.status(200).json({ msg: "friend removed", data: user.friends });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ msg: "Error removing friend", error });
+  }
+};
+
+const hasLikedAccount = async (userId, accountId) => {
+  try {
+    // Check if the user has already liked the account
+    const account = await Userdb.findById(accountId);
+    const hasLiked = account.likes.some((like) => like.from.equals(userId));
+    return hasLiked;
+  } catch (error) {
+    console.log(error);
+    return false;
+  }
+};
 
 module.exports = {
   getUserBlockedAccounts,
@@ -196,6 +398,13 @@ module.exports = {
   blockUser,
   createAvatar,
   getNotifications,
-  deleteNotification,
-  deleteMultipleNotifications
+  markNotificationAsSeen,
+  markManyNotificationsAsSeen,
+  likeAccount,
+  unlikeAccount,
+  addFriend,
+  getAllAccountsMail,
+  removeFriend,
+  uploadImages,
+  deleteUserImage,
 };

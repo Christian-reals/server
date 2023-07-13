@@ -3,6 +3,7 @@ const commentdb = require("../models/commentdb");
 const Discussiondb = require("../models/discussionsdb");
 
 const createDiscussion = async (req, res) => {
+  console.log(req.body)
   const discussion = new Discussiondb(req.body);
   try {
     await discussion.save(discussion);
@@ -19,7 +20,12 @@ const getDiscussion = async (req, res) => {
     
     try {
       const discussion = await Discussiondb.findOne({_id:id})
-        .populate('comments');
+      .populate(
+        {
+          path: "comments",
+          populate: { path: "commentator",populate:{path:'registrationDataId'} },
+        }
+      )
         if (discussion) {
              res.status(200).json({ data: discussion, msg: "request sucessful" });
             
@@ -28,21 +34,34 @@ const getDiscussion = async (req, res) => {
             
         }
     } catch (error) {
+      console.log(error)
       res.status(400).json({ msg: "failed", error: error });
     }
   };
 const getAllDiscussions = async (req, res) => {
   try {
-    const discussion = await Discussiondb.find({})
+    const discussion = await Discussiondb.find({}).populate(
+      {
+        path: "comments",
+        populate: { path: "commentator",populate:{path:'registrationDataId'} },
+      }
+    )
       .lean()
     res.status(200).json({ data: discussion, msg: "request sucessful" });
   } catch (error) {
+    console.log(error)
     res.status(400).json({ msg: "failed", error: error });
   }
 };
 const deleteDiscussion = async (req, res) => {
   const { id } = req.params;
-  const deleteddiscussion = Discussiondb.findByIdAndDelete(id);
+  try {
+  const deletedDiscussion = await Discussiondb.findByIdAndDelete(id);
+    res.status(200).json({msg:'discussion deleted'})
+  } catch (error) {
+    res.status(500).json({msg:'somethingwent wrong, discussion not deleted'})
+    
+  }
 };
 const updateDiscussion = async (req, res) => {
   const { id } = req.params;
@@ -62,7 +81,7 @@ const reactToDiscussion = async (req, res) => {
   try {
     const discussion = await Discussiondb.findOneAndUpdate(
       { _id: id },
-      {
+      { 
         $push: {
           reactions: {
             reaction: reaction,
@@ -92,7 +111,7 @@ const replyDiscussion = async (req, res) => {
       //add the reply to the refrenced dicussion
       const discussion = await Discussiondb.findOneAndUpdate(
         { _id: id },
-        { $push: { comments: comment._id,participants:userId } }
+        { $push: { comments: comment._id} }
       ).exec();
       await comment.save(comment);
       //save the reply as a discussion to the current chat
@@ -106,6 +125,43 @@ const replyDiscussion = async (req, res) => {
   }
 };
 
+const likeDiscussion = async (req, res) => {
+  const { discussionId } = req.params;
+  const { userId } = req.body;
+  try {
+    const discussion = await Discussiondb.findById(discussionId);
+    const hasLiked = discussion?.likes?.some((like) => like.from.equals(userId));
+
+    if (hasLiked) {
+      res.status(400).json({ msg: "you have already liked this discussion" });
+    } else {
+      const like = {
+        from: userId,
+      };
+
+      // Update the recipient's notifications array in the database
+      const discussion = await Discussiondb.findByIdAndUpdate(
+        discussionId,
+        {
+          $push: {
+            likes: like,
+          },
+        },
+        { new: true }
+      );
+
+      console.log(discussion);
+
+      res.status(200).json({ msg: "discussion liked", likes: discussion.likes });
+    }
+  } catch (error) {
+    console.log(error);
+    res
+      .status(500)
+      .json({ msg: "something went wrong: could not like discussion" });
+  }
+};
+
 module.exports = {
   createDiscussion,
   getAllDiscussions,
@@ -113,5 +169,6 @@ module.exports = {
   updateDiscussion,
   reactToDiscussion,
   replyDiscussion,
-  getDiscussion
+  getDiscussion,
+  likeDiscussion
 };

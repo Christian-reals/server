@@ -149,11 +149,11 @@ var profileSchema = new mongoose.Schema({
   },
   child_age_youngest: {
     type: String,
-    required: [true, `child youngest age cannot be empty`],
+    // required: [true, `child youngest age cannot be empty`],
   },
   child_age_oldest: {
     type: String,
-    required: [true, `child_age_oldest cannot be empty`],
+    // required: [true, `child_age_oldest cannot be empty`],
   },
   more_children: {
     type: String,
@@ -161,6 +161,7 @@ var profileSchema = new mongoose.Schema({
   },
   children_living_with: {
     type: String,
+    default:'0',
     required: [true, `no of children lived with cannot be empty`],
   },
   have_pets: {
@@ -388,11 +389,15 @@ var userschema = new mongoose.Schema(
       },
     ],
     avatar:String,
-    photos:[{
-      id:mongoose.Types.ObjectId,
+    userImages:[{
+      id:String,
       url:String
     }],
     isPremium: {
+      type: Boolean,
+      default: false,
+    },
+    isBasic: {
       type: Boolean,
       default: false,
     },
@@ -400,6 +405,12 @@ var userschema = new mongoose.Schema(
     customerId:String,
     subscriptionId:String,
     paymentIntentId:String,
+    hasTrial:{
+      type:Boolean,
+    },
+    trialEndDate:{
+      type:Date
+    },
     isBanned: {
       type: Boolean,
       default: false,
@@ -427,10 +438,22 @@ var userschema = new mongoose.Schema(
       },
       notificationType:String,
       seen:{
-        default:false
+        default:false,
+        type:Boolean,
+        required: [true, "seen can not be empty"],
       }
     }],
-    date: String,
+    likes:[{
+      from:      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Users",
+        required:true
+      },
+      date:{
+        type: Date,
+        default: Date.now()
+      },
+    }],
   },
   {
     timestamps: true,

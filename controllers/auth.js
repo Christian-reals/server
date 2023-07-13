@@ -7,6 +7,7 @@ const {
   sendVerificationEmail,
   sendResetPasswordEmail,
 } = require("../utils/mailer");
+const moment = require("moment/moment");
 
 const register = async (req, res) => {
   console.log("register request");
@@ -40,7 +41,8 @@ const register = async (req, res) => {
         });
         console.log("token ");
 
-        sendVerificationEmail(email, token);
+        await sendVerificationEmail(email, token, userName);
+
         return res
           .status(201)
           .json({ msg: "user registered sucessfully", id: user._id });
@@ -72,6 +74,8 @@ const createProfile = async (req, res) => {
       profile_complete: true,
     });
     try {
+      user.hasTrial = true;
+      user.trialEndDate = Date.now() + 3 * 24 * 60 * 60 * 1000;
       await user.save(user);
       return res.status(201).json({ msg: "Profile created sucessfully" });
     } catch (error) {
@@ -101,28 +105,55 @@ const login = async (req, res) => {
           const userProfile = await Userdb.findOne({
             registrationDataId: user._id,
           });
-          const id = userProfile._id;
-          //
-          const username = user.userName;
-          // console.log(username)
-          const token = jwt.sign({ id, username }, process.env.SECRET_KEY, {
-            expiresIn: "30d",
-          });
-          return res.status(201).json({
-            msg: "user logged in",
-            token: token,
-            verified: user.email_verified,
-            email: user.email,
-            username: user.firstName,
-          });
+          //if the user has a profile
+          if (userProfile) {
+            const id = userProfile?._id;
+            const username = user.userName;
+            // generate a jwt token
+            const token = jwt.sign({ id, username }, process.env.SECRET_KEY, {
+              expiresIn: "2d",
+            });
+            return res.status(201).json({
+              msg: "user logged in",
+              token: token,
+              verified: user.email_verified,
+              email: user.email,
+              username: user.firstName,
+            });
+          } else {
+            switch (user.email_verified) {
+              case true:
+                return res
+                  .status(400)
+                  .json({
+                    msg: "Incompete registration: You have not created a profile.",
+                  })
+                  // .redirect(`http://127.0.0.1:5173//profile/?id=${user._id}`);
+
+              case false:
+                return res
+                .status(400)
+                .json({
+                  msg: "You have not verified your email account",
+                })
+                .redirect(`http://127.0.0.1:5173//verify/?email=${user.email}&username=${user.userName}`,);
+
+              default:
+                break;
+            }
+          }
         } else {
           return res.status(401).json({ msg: "password incorrect" });
         }
       }
+      else{
       res.status(404).json({ msg: "user not found" });
+
+      }
     } catch (error) {
+      console.log(error);
       return res
-        .status(404)
+        .status(500)
         .json({ msg: "something went wrong user not found", error, userInfo });
     }
   } else {
@@ -178,6 +209,7 @@ const resetPassword = async (req, res) => {
     res.status(400).json({ msg: "error: could not change password", error });
   }
 };
+
 const changePassword = async (req, res) => {
   const { userId, oldPassword, newPassword } = req.body;
 

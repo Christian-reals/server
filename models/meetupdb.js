@@ -5,6 +5,10 @@ const meetupDb = new mongoose.Schema({
         required:true,
         type:String,
     },
+    isApproved:{
+        type:Boolean,
+        default:false
+    },
     category:{
         type: Array,
     },
@@ -26,7 +30,7 @@ const meetupDb = new mongoose.Schema({
         type:mongoose.Schema.Types.ObjectId,
         ref:'Users',
     }]
-})
+},{timeseries:true})
 
 const MeetupDb = mongoose.model('Meetups',meetupDb)
 
