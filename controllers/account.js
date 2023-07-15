@@ -36,7 +36,7 @@ const getAccount = async (req, res) => {
       .exec();
     res.status(200).json({ msg: "success", data: user });
   } catch (error) {
-    console.log(error);
+    console.log(error,'error');
     res.status(400).json({ msg: "unsucessfull: could not fetch user", error });
   }
 };
@@ -232,8 +232,6 @@ const filterUsers = async (req, res) => {
       Languages,
       sort,
     } = req.query;
-
-    console.log(req.query, "query");
     // Query Objects
     const ProfileQueryObjects = {};
     if (hairColour) {
