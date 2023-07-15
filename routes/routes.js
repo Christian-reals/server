@@ -161,7 +161,7 @@ route.delete("/meetup/:id", adminAuthMiddleware, deleteMeetup);
 
 
 //Feedbacks
-route.post("/feedback", auth, createFeedback);
+route.post("/feedback",createFeedback);
 route.get("/feedback", adminAuthMiddleware,getAllFeedback);
 route.get("/feedback/:id", adminAuthMiddleware, getFeedbackById);
 route.put("/feedback/reply:id", adminAuthMiddleware, replyFeedback);

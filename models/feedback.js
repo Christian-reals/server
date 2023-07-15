@@ -1,17 +1,16 @@
 const mongoose = require('mongoose');
 
 const feedbackSchema = new mongoose.Schema({
-  firstName: {
+  firstname: {
     type: String,
     required: true
   },
-  lastName: {
+  surname: {
     type: String,
     required: true
   },
   userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User' // If feedback is only for members
+    type: String,
   },
   email: {
     type: String,
@@ -23,7 +22,6 @@ const feedbackSchema = new mongoose.Schema({
   },
   reply: {
     type: String,
-    required: true
   },
   isReplied:{
     type: String,

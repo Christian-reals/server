@@ -3,18 +3,20 @@ const Feedback = require('../models/feedback');
 // User Feedback Create Controller
 exports.createFeedback = async (req, res) => {
   try {
-    const { firstName, surname, email, subject, message } = req.body;
+    const { firstname, surname, email, subject, message,userId } = req.body;
     const feedback = new Feedback({
-      firstName,
+      firstname,
       surname,
       email,
       subject,
-      message
+      message,
+      userId
     });
     await feedback.save();
-    res.status(201).json({ message: 'Feedback created successfully' });
+    res.status(201).json({ message: 'Feedback created successfully', });
   } catch (error) {
-    res.status(500).json({ error: 'Something went wrong' });
+    console.log(error)
+    res.status(500).json({ error: 'Something went wrong' ,error});
   }
 };
 
