@@ -17,6 +17,12 @@ const devotionalSchema = new mongoose.Schema({
     type: Date,
     required: true
   },
+  comments:[
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref:'Comments'
+  }
+  ],
   content: {
     type: String,
     required: true

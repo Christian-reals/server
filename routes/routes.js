@@ -10,7 +10,7 @@ const {
   likeEvents,
   deleteUserEvents,
 } = require("../controllers/events");
-const { getAccount, deleteAccount, getAllAccounts, blockUser, createAvatar, getUserBlockedAccounts, getNotifications, markNotificationAsSeen, markManyNotificationsAsSeen, likeAccount, unlikeAccount, addFriend, removeFriend, getAllAccountsMail, uploadImages, deleteUserImage } = require("../controllers/account");
+const { getAccount, deleteAccount, getAllAccounts, blockUser, createAvatar, getUserBlockedAccounts, getNotifications, markNotificationAsSeen, markManyNotificationsAsSeen, likeAccount, unlikeAccount, addFriend, removeFriend, getAllAccountsMail, uploadImages, deleteUserImage, filterUsers } = require("../controllers/account");
 const {
   login,
   register,
@@ -36,6 +36,7 @@ const {
   deleteUserChat,
   deleteChatMessage,
   unBlockChat,
+  markMessagesAsSeen,
 } = require("../controllers/chat");
 const {
   getAllMeetups,
@@ -71,6 +72,7 @@ const { createCheckout, checkUserPlan, checkPaymentStatus, getPaymentMethod, str
 const { singleImage, userImages } = require("../middleware/handleImageUpload");
 const { adminGetAllLoveQuests } = require("../controllers/admin");
 const { createFeedback, getAllFeedback, getFeedbackById, deleteFeedbackById, replyFeedback, editReply } = require("../controllers/feedback");
+const { getAllDevotionals, getDailyDevotional, replyDevotional } = require("../controllers/devotional");
 //auth middleware
 const auth = require("../middleware/jwt").authMiddleware;
 const verify = require("../middleware/jwt").verifyToken;
@@ -88,6 +90,9 @@ route.post("/account/delete", auth, deleteAccount);
 route.get("/account/:userId", getAccount);
 // get all accounts
 route.get("/accounts",getAllAccounts);
+// filter all accounts
+route.get("/accounts/filter",filterUsers);
+
 //get a list of all verified mails
 route.get("/accounts/mail",getAllAccountsMail);
 //get blocked accounts
@@ -194,6 +199,14 @@ route.delete("/chat/:chatId/message/:messageId",auth, deleteChatMessage);
 route.put("/chat/delete/:id",auth, deleteUserChat);
 route.put("/chat/block/:id", auth,blockChat);
 route.put("/chat/unblock/:friendId", auth,unBlockChat);
+route.put('/chat/mark/messages',auth,markMessagesAsSeen)
+
+//devotional
+
+route.get("/devotionals",getAllDevotionals);
+route.get("/devotional/daily/:date",getDailyDevotional);
+route.post("/devotional/:id",replyDevotional);
+
 
 
 

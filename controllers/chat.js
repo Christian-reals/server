@@ -41,7 +41,6 @@ const createMessage = async (req, res) => {
         const { chatId, from, to, ...others } = req.body;
         const originalname = req.file.originalname;
         const fileType = req.file.originalname.split(".").pop();
-        console.log(originalname);
         const message = new Messagesdb({
           ...others,
           from: mongoose.Types.ObjectId(from),
@@ -87,7 +86,7 @@ const createMessage = async (req, res) => {
           ).exec();
           res.status(201).json({ msg: "text message created successfully" });
         } catch (error) {
-          console.log(error)
+          console.log(error);
           res.status(400).json({
             msg: "text message creation is not successful",
             error: error,
@@ -102,16 +101,16 @@ const createMessage = async (req, res) => {
 const createChat = async (req, res) => {
   try {
     const { recieverId, userId } = req.body;
-    console.log(userId)
 
     if (recieverId && userId) {
-      const user = await Userdb.findById(userId).populate('chats')
-      const chatExists = user.chats.filter((chat)=>{
-        console.log(chat)
-        return chat?.members?.filter((member)=>member.toString()==recieverId)
-      })
-      if (chatExists.length>0) {
-        res.status(301).json({msg:"chat already exists",chatExists})
+      const user = await Userdb.findById(userId).populate("chats");
+      const chatExists = user.chats.filter((chat) => {
+        return chat?.members?.filter(
+          (member) => member.toString() == recieverId
+        );
+      });
+      if (chatExists.length > 0) {
+        res.status(301).json({ msg: "chat already exists", chatExists });
       } else {
         const chat = new Chatdb({
           members: [
@@ -120,7 +119,6 @@ const createChat = async (req, res) => {
           ],
         });
         chat.members.forEach(async (id) => {
-          
           await Userdb.findOneAndUpdate(
             { _id: id },
             { $push: { chats: mongoose.Types.ObjectId(chat._id) } }
@@ -128,11 +126,13 @@ const createChat = async (req, res) => {
         });
         await Userdb.findOneAndUpdate(
           { _id: recieverId },
-          { $push: { friends: {friend:mongoose.Types.ObjectId(userId)} } }
+          { $push: { friends: { friend: mongoose.Types.ObjectId(userId) } } }
         ).exec();
         await Userdb.findOneAndUpdate(
           { _id: userId },
-          { $push: { friends: {friend:mongoose.Types.ObjectId(recieverId)} } }
+          {
+            $push: { friends: { friend: mongoose.Types.ObjectId(recieverId) } },
+          }
         ).exec();
         await chat.save(chat);
         res
@@ -165,29 +165,29 @@ const getUserChats = async (req, res) => {
       // Get receiver data for each chat
       const chatData = await Promise.all(
         chats.map(async (chat) => {
-          console.log(chat,'chat')
           const recieverId = chat.members.filter((member) => {
-            console.log(member,'member')
             return member.toString() != user._id;
           });
           if (recieverId[0]) {
-            console.log(recieverId[0].toString(),'reciever id')
             const reciever = await Userdb.findById(recieverId[0])
               .populate("registrationDataId")
               .exec();
-              console.log(reciever?.registrationDataId,'reciever')
-            const  userName  = reciever?.registrationDataId?.userName;
-            const  avatar  = reciever?.avatar;
+            const userName = reciever?.registrationDataId?.userName;
+            const avatar = reciever?.avatar;
             // Get last message
             const chatMessage = await Chatdb.findById(chat._id)
               .populate("messages")
               .exec();
+            const unSeenMessages = chatMessage.messages.filter((message)=>{
+              return message.seen === false
+            })
             const messages = chatMessage.messages;
             return {
               avatar: avatar,
               recieverId: recieverId[0],
               username: userName,
               messages: messages[messages.length - 1],
+              unSeenMessages:unSeenMessages,
               chatId: chat._id,
             };
           }
@@ -201,7 +201,7 @@ const getUserChats = async (req, res) => {
       res.status(400).json({ data: null, msg: "no chat found" });
     }
   } catch (error) {
-    console.log(error)
+    console.log(error);
     res.status(400).json({ msg: "failed to ", error: error });
   }
 };
@@ -209,17 +209,14 @@ const getUserChats = async (req, res) => {
 //get messages in a chat
 const getMessages = async (req, res) => {
   const { id } = req.params;
-  
+
   try {
-    const chat = await Chatdb.findById({ _id: id }).populate({
-      path: "messages",
-      populate: [
-        { path: "refrenceChat"},
-        { path: "replies"},
-        
-      ]
-    })
-  .exec();
+    const chat = await Chatdb.findById({ _id: id })
+      .populate({
+        path: "messages",
+        populate: [{ path: "refrenceChat" }, { path: "replies" }],
+      })
+      .exec();
     const messages = chat.messages;
     if (messages) {
       res.status(200).json(messages);
@@ -231,87 +228,104 @@ const getMessages = async (req, res) => {
   }
 };
 
+const markMessagesAsSeen = async (req,res)=>{
+  const {messageIds}=req.body
+
+try {
+  await Promise.all(
+    messageIds.map(async (id)=>{
+      await Messagesdb.findByIdAndUpdate(mongoose.Types.ObjectId(id),{$set:{seen:true}})
+    })
+  )
+  res.status(200).json({ msg: "request sucessful" });
+
+} catch (error) {
+  console.log(error)
+  res.status(500).json({ msg: "error: something went wrong", error });
+
+}
+
+
+}
 //delete chats
 const deleteChat = async (req, res) => {
-  const { id } = req.params;
-  const deletedmessage = Chatdb.findByIdAndDelete(id);
+  try {
+    const { id } = req.params;
+    const deletedmessage = Chatdb.findByIdAndDelete(id);
+    res.status(200).json({ msg: "success: chat deleted" });
+  } catch (error) {
+    res.status(500).json({ msg: "error: something went wrong", error });
+    
+  }
+
+  
 };
 
 //delete user chats
 const deleteUserChat = async (req, res) => {
-  const {userId} = req.body
-  console.log(req.body)
+  const { userId } = req.body;
   const { id } = req.params;
-  const chat = await Chatdb.findById(id)
-  const friendId  = chat.members.filter((member)=>{return member != userId  })
-  console.log('deleteing', userId,id)
-  if (userId&&id) {
+  const chat = await Chatdb.findById(id);
+  const friendId = chat.members.filter((member) => {
+    return member != userId;
+  });
+  if (userId && id) {
     try {
-      await Userdb.updateOne(
-        { _id: userId },
-        { $pull: { chats: id }}
-      );
+      await Userdb.updateOne({ _id: userId }, { $pull: { chats: id } });
       await Userdb.findOneAndUpdate(
         { _id: userId },
         { $pull: { friends: { friend: friendId } } },
-        { new: true },)
-    res.status(200).json({msg:'success: chat deleted'})
-
+        { new: true }
+      );
+      res.status(200).json({ msg: "success: chat deleted" });
     } catch (error) {
-    res.status(500).json({msg:'error: something went wrong',error})
-      
+      res.status(500).json({ msg: "error: something went wrong", error });
     }
   } else {
-    res.status(400).json({msg:'error: invalid id'})
+    res.status(400).json({ msg: "error: invalid id" });
   }
-
 };
 
 //blockchat
 
 const blockChat = async (req, res) => {
-  const {userId} = req.body
+  const { userId } = req.body;
   const { id } = req.params;
-  console.log('blocking', userId,id)
-  const chat = await Chatdb.findById(id)
-  const friendId  = chat.members.filter((member)=>{return member != userId  })
-  console.log(friendId)
+  const chat = await Chatdb.findById(id);
+  const friendId = chat.members.filter((member) => {
+    return member != userId;
+  });
+
   if (friendId) {
     try {
-        await Userdb.updateOne(
-    { _id: userId },
-    { $push: { blockedChats: id }}
-  );
-  await Userdb.updateOne(
-    { _id: userId },
-    { $set: { "friends.$[elem].blocked": true } }, { arrayFilters: [{ "elem.friend": friendId  }] }
-  );
-  res.status(200).json({msg:'success: chat blocked'})
+      await Userdb.updateOne({ _id: userId }, { $push: { blockedChats: id } });
+      await Userdb.updateOne(
+        { _id: userId },
+        { $set: { "friends.$[elem].blocked": true } },
+        { arrayFilters: [{ "elem.friend": friendId }] }
+      );
+      res.status(200).json({ msg: "success: chat blocked" });
     } catch (error) {
-    res.status(500).json({msg:'error: something went wrong'})
-      
+      res.status(500).json({ msg: "error: something went wrong" });
     }
   } else {
-    res.status(400).json({msg:'error: unable to resolve friendId'})
+    res.status(400).json({ msg: "error: unable to resolve friendId" });
   }
-
 };
 
 const unBlockChat = async (req, res) => {
-  const {userId} = req.body
-  const {friendId} = req.params
-  console.log(friendId)
+  const { userId } = req.body;
+  const { friendId } = req.params;
   try {
-      await Userdb.updateOne(
-    { _id: userId },
-    { $set: { "friends.$[elem].blocked": false } }, { arrayFilters: [{ "elem.friend": friendId  }] }
-  );
-  res.status(200).json({msg:'user unblocked'})
+    await Userdb.updateOne(
+      { _id: userId },
+      { $set: { "friends.$[elem].blocked": false } },
+      { arrayFilters: [{ "elem.friend": friendId }] }
+    );
+    res.status(200).json({ msg: "user unblocked" });
   } catch (error) {
-  res.status(500).json({msg:'error: request unsucessful'})
-    
+    res.status(500).json({ msg: "error: request unsucessful" });
   }
-
 };
 
 const updateMessage = async (req, res) => {
@@ -345,13 +359,12 @@ const reactToMessage = async (req, res) => {
 const replyMessage = async (req, res) => {
   //id of the chat
   const { id } = req.params;
-  console.log(req.body)
 
-  
+
   const chatid = mongoose.Types.ObjectId(id);
   //id of the chat taht is being replied
   const { referenceid, from, to, ...others } = req.body;
-  if (referenceid&& from&& to) {
+  if (referenceid && from && to) {
     try {
       const message = new Messagesdb({
         ...others,
@@ -382,26 +395,24 @@ const replyMessage = async (req, res) => {
       res.send(error);
     }
   } else {
-    res.status(400).json({msg:'reply failed'})
+    res.status(400).json({ msg: "reply failed" });
   }
-
 };
-const deleteChatMessage = async(req,res)=>{
-  const {chatId,messageId} = req.params
+const deleteChatMessage = async (req, res) => {
+  const { chatId, messageId } = req.params;
   try {
     //find the chat with ChatId and pull message that has _id of messageId
     await Chatdb.findOneAndUpdate(
       { _id: chatId },
-      { $pull: { messages: messageId} }
+      { $pull: { messages: messageId } }
     ).exec();
     //delete the message
-    await Messagesdb.findByIdAndDelete(messageId)
+    await Messagesdb.findByIdAndDelete(messageId);
     res.status(201).json({ msg: "message deleted successfully" });
   } catch (error) {
     res.json({ msg: "message deletion is not successful", error });
   }
-
-}
+};
 const deleteMessage = async (req, res) => {
   const { id } = req.params;
   try {
@@ -427,4 +438,5 @@ module.exports = {
   blockChat,
   deleteChatMessage,
   unBlockChat,
+  markMessagesAsSeen
 };

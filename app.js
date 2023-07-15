@@ -63,9 +63,7 @@ webPush.setVapidDetails(
 //subscribe to webpush
 
 app.post("/subscribe", async (req, res) => {
-  console.log("subscribe");
   try {
-    console.log(req.body);
     //Get push subscription object
 
     const { subscription, userId } = req.body;
@@ -127,7 +125,6 @@ io.on("connection", (socket) => {
   });
 
   socket.on("callUser", ({ userToCall, signalData, from, name }) => {
-    console.log("calling", userToCall, from,signalData);
     socket.emit("callUser", { to: userToCall, signal: signalData, from, name });
   });
 
@@ -147,7 +144,6 @@ io.on("connection", (socket) => {
     socket.on("chatMessage", async (message) => {
       try {
         const { recieverId, userId } = message;
-        console.log(message);
         //get sender username
         const user = await Userdb.findById(userId).populate(
           "registrationDataId"
@@ -184,6 +180,7 @@ io.on("connection", (socket) => {
       socket.broadcast.to(roomid).emit("message", formatmsg(userid, message));
     });
     socket.on('changeEvent',(event) =>{
+      socket.broadcast.to(roomid).emit("chatEvent",event);
 
     })
     socket.on("videoCall", (message) => {
@@ -279,7 +276,6 @@ io.on("connection", (socket) => {
   socket.on("notification", async (notification) => {
     const { from, reciever, message, type } = notification;
     console.log("notify");
-    console.log(message, reciever);
 
     try {
       const notifications = {
@@ -300,7 +296,6 @@ io.on("connection", (socket) => {
         "registrationDataId"
       );
 
-      console.log(user?.registrationDataId?.userName);
 
       await socket.emit("notify", {
         from: from,

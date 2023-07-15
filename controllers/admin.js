@@ -4,10 +4,8 @@ const { Userdb, registrationDb } = require("../models/userdb");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
-
-
 const adminSignup = async (req, res) => {
-  const { firstName, lastName, userName, email, password,role } = req.body;
+  const { firstName, lastName, userName, email, password, role } = req.body;
 
   try {
     // Check if admin already exists
@@ -15,7 +13,7 @@ const adminSignup = async (req, res) => {
     if (admin) {
       return res.status(400).json({ msg: "Admin already exists" });
     }
-    if (firstName, lastName, userName, email, password,role ) {
+    if ((firstName, lastName, userName, email, password, role)) {
       admin = new Admin({
         firstName,
         lastName,
@@ -24,25 +22,22 @@ const adminSignup = async (req, res) => {
         password,
         role,
       });
-      
+
       // Encrypt password
       const salt = await bcrypt.genSalt(10);
-      console.log(password,salt)
 
       admin.password = await bcrypt.hash(password, salt);
-  
+
       // Save admin to database
       await admin.save();
-  
+
       res.status(200).json({ message: "Admin created successfully" });
     } else {
       res.status(400).json({ message: "error: fill in all necessary fields" });
-      
     }
-
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Server error",error:err });
+    res.status(500).json({ message: "Server error", error: err });
   }
 };
 
@@ -83,107 +78,214 @@ const adminSignIn = async (req, res) => {
 };
 
 const adminGetAllLoveQuests = async (req, res) => {
-    try {
-      const LoveQuest = await LoveQuestdb.find();
-      console.log(LoveQuest)
-      res.status(200).json({ data: LoveQuest, msg: "request sucessful" });
-    } catch (error) {
-      res.status(400).json({ msg: "failed", error: error });
-    }
-  };
+  try {
+    const LoveQuest = await LoveQuestdb.find();
+    res.status(200).json({ data: LoveQuest, msg: "request sucessful" });
+  } catch (error) {
+    res.status(400).json({ msg: "failed", error: error });
+  }
+};
 
-  const deleteAccount = async (req, res) => {
-    const {userId} = req.params;
+const generateAllUsersGraphData = async (req, res) => {
+  const { year } = req.params;
 
-      try {
+  try {
+    // Query the database to get sales data for the specified year and seller
+    const usersData = await Userdb.aggregate([
+      {
+        $match: {
+          createdAt: {
+            $gte: new Date(`${year}-01-01`),
+            $lte: new Date(`${year}-12-31`),
+          },
+        },
+      },
+      {
+        $group: {
+          _id: { $month: "$createdAt" },
+          totalUser: { $count:{}},
+        },
+      },
+      {
+        $sort: { _id: 1 },
+      },
+    ]);
+    // Create an array with default monthly data
+    const monthlyData = [
+      { name: "Jan", totalUser: 0 },
+      { name: "Feb", totalUser: 0 },
+      { name: "Mar", totalUser: 0 },
+      { name: "Apr", totalUser: 0 },
+      { name: "May", totalUser: 0 },
+      { name: "Jun", totalUser: 0 },
+      { name: "Jul", totalUser: 0 },
+      { name: "Aug", totalUser: 0 },
+      { name: "Sep", totalUser: 0 },
+      { name: "Oct", totalUser: 0 },
+      { name: "Nov", totalUser: 0 },
+      { name: "Dec", totalUser: 0 },
+    ];
 
-            await Userdb.findOneAndDelete({ registrationDataId: userId });
-            await registrationDb.findByIdAndDelete(userId);
-            return res.status(201).json({
-              msg: "user deleted",
-            });
+    // Update the monthly data with actual sales totals
+    usersData.forEach((sale) => {
+      const monthIndex = sale._id - 1;
+      monthlyData[monthIndex].totalUser = sale.totalUser;
+    });
 
-      } catch (error) {
-        return res.status(500).json({
-          msg: "something went wrong: account could not be deleted",
-          error,
-        });
-      }
+    res.json({ message: "request sucessfull", monthlyData });
+  } catch (err) {
+    console.log(err);
+    res
+      .status(500)
+      .json({ message: "Error generating users graph data", error: err });
+  }
+};
 
-  };
-  
-  const suspendAccount = async (req, res) => {
-    const {userId} = req.params;
+const generateAllPremiumUsersGraphData = async (req, res) => {
+  const { year } = req.params;
 
-    console.log(userId)
-    
+  try {
+    // Query the database to get sales data for the specified year and seller
+    const usersData = await Userdb.aggregate([
+      {
+        $match: {
+          isPremium:true,
+          createdAt: {
+            $gte: new Date(`${year}-01-01`),
+            $lte: new Date(`${year}-12-31`),
+          },
+        },
+      },
+      {
+        $group: {
+          _id: { $month: "$createdAt" },
+          totalUser: { $sum: "$price" },
+        },
+      },
+      {
+        $sort: { _id: 1 },
+      },
+    ]);
 
-    try {
-      const user = await Userdb.findByIdAndUpdate(userId,{$set:{isSuspended:true}} );
+    // Create an array with default monthly data
+    const monthlyData = [
+      { name: "Jan", totalUser: 0 },
+      { name: "Feb", totalUser: 0 },
+      { name: "Mar", totalUser: 0 },
+      { name: "Apr", totalUser: 0 },
+      { name: "May", totalUser: 0 },
+      { name: "Jun", totalUser: 0 },
+      { name: "Jul", totalUser: 0 },
+      { name: "Aug", totalUser: 0 },
+      { name: "Sep", totalUser: 0 },
+      { name: "Oct", totalUser: 0 },
+      { name: "Nov", totalUser: 0 },
+      { name: "Dec", totalUser: 0 },
+    ];
+
+    // Update the monthly data with actual sales totals
+    usersData.forEach((sale) => {
+      const monthIndex = sale._id - 1;
+      monthlyData[monthIndex].totalUser = sale.totalUser;
+    });
+
+    res.json({ message: "request sucessfull", monthlyData });
+  } catch (err) {
+    console.log(err);
+    res
+      .status(500)
+      .json({ message: "Error generating users graph data", error: err });
+  }
+};
+
+const deleteAccount = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    await Userdb.findOneAndDelete({ registrationDataId: userId });
+    await registrationDb.findByIdAndDelete(userId);
+    return res.status(201).json({
+      msg: "user deleted",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      msg: "something went wrong: account could not be deleted",
+      error,
+    });
+  }
+};
+
+const suspendAccount = async (req, res) => {
+  const { userId } = req.params;
+
+
+  try {
+    const user = await Userdb.findByIdAndUpdate(userId, {
+      $set: { isSuspended: true },
+    });
+    return res.status(201).json({
+      msg: "user Suspended",
+      user,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      msg: "something went wrong: account could not be suspended",
+      error,
+    });
+  }
+};
+
+const banAccount = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    await Userdb.findByIdAndUpdate(userId, { $set: { isBanned: true } });
+    return res.status(201).json({
+      msg: "user banned",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      msg: "something went wrong: account could not be banned",
+      error,
+    });
+  }
+};
+
+const activateAccount = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const user = await Userdb.findById(userId);
+    if (user.isBanned) {
+      await Userdb.findByIdAndUpdate(userId, { $set: { isBanned: false } });
       return res.status(201).json({
-        msg: "user Suspended",
-        user
+        msg: "user re-activated",
       });
-
-    } catch (error) {
-      return res.status(500).json({
-        msg: "something went wrong: account could not be suspended",
-        error,
-      });
-    }
-  };
-
-
-  const banAccount = async (req, res) => {
-    const {userId} = req.params;
-
-    
-
-    try {
-      await Userdb.findByIdAndUpdate(userId,{$set:{isBanned:true}} );
+    } else if (user.isSuspended) {
+      await Userdb.findByIdAndUpdate(userId, { $set: { isSuspended: false } });
       return res.status(201).json({
-        msg: "user banned",
+        msg: "user re-activated",
       });
-
-    } catch (error) {
-      return res.status(500).json({
-        msg: "something went wrong: account could not be banned",
-        error,
+    } else {
+      return res.status(400).json({
+        msg: "user is already active",
       });
     }
-  };
-
-  const activateAccount = async (req, res) => {
-    const {userId} = req.params;
-
-    
-
-    try {
-      
-      const user = await Userdb.findById(userId );
-      if (user.isBanned) {
-        await Userdb.findByIdAndUpdate(userId,{$set:{isBanned:false}} );
-        return res.status(201).json({
-          msg: "user re-activated",
-        });
-      }
-      else if(user.isSuspended){
-        await Userdb.findByIdAndUpdate(userId,{$set:{isSuspended:false}} );
-        return res.status(201).json({
-          msg: "user re-activated",
-        });
-      }
-      else{
-        return res.status(400).json({
-          msg: "user is already active",
-        });
-      }
-
-    } catch (error) {
-      return res.status(500).json({
-        msg: "something went wrong: account could not be reactivated",
-        error,
-      });
-    }
-  };
-  module.exports = {adminGetAllLoveQuests,activateAccount,banAccount,suspendAccount,deleteAccount,adminSignIn,adminSignup}
+  } catch (error) {
+    return res.status(500).json({
+      msg: "something went wrong: account could not be reactivated",
+      error,
+    });
+  }
+};
+module.exports = {
+  adminGetAllLoveQuests,
+  activateAccount,
+  banAccount,
+  suspendAccount,
+  deleteAccount,
+  adminSignIn,
+  adminSignup,
+  generateAllPremiumUsersGraphData,
+  generateAllUsersGraphData
+};

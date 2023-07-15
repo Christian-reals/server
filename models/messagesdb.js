@@ -38,6 +38,10 @@ const message = new mongoose.Schema({
         type:Boolean,
         default:false
     },
+    seen:{
+        type:Boolean,
+        default:false
+    },
     refrenceChat:{
         type:mongoose.Schema.Types.ObjectId,
         ref:'Messages'

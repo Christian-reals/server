@@ -50,7 +50,7 @@ const getUserBlockedAccounts = async (req, res) => {
         populate: { path: "registrationDataId" },
       })
       .exec();
-    const blocked = user.friends.filter((friend) => friend.blocked===true);
+    const blocked = user.friends.filter((friend) => friend.blocked === true);
     console.log(blocked);
     res.status(200).json({ msg: "success", data: blocked });
   } catch (error) {
@@ -63,9 +63,9 @@ const getUserBlockedAccounts = async (req, res) => {
 const getNotifications = async (req, res) => {
   const { userId } = req.params;
   try {
-    const notifications = await Notifications.find({ to: userId }).populate(
-      "from to"
-    ).sort('date');
+    const notifications = await Notifications.find({ to: userId })
+      .populate("from to")
+      .sort("date");
     res.status(200).json({ msg: "success", notifications });
   } catch (error) {
     res
@@ -74,30 +74,30 @@ const getNotifications = async (req, res) => {
   }
 };
 
-
 const markNotificationAsSeen = async (req, res) => {
   const { notificationId } = req.params; // Assuming the notification ID is provided as a URL parameter
   const { userId } = req.body;
-
-  console.log(notificationId,userId,'Notification')
 
   try {
     const user = await Userdb.findById(userId); // Assuming the authenticated user's ID is available in req.userId
     if (user) {
       // Find the notification by ID in the user's notifications array
-      const notification = await  Notifications.findByIdAndUpdate(notificationId, {
-        $set: { seen: true },
-      });
-      console.log(notification)
+      const notification = await Notifications.findByIdAndUpdate(
+        notificationId,
+        {
+          $set: { seen: true },
+        }
+      );
+      console.log(notification);
       if (!notification) {
         return res.status(404).json({ message: "Notification not found" });
       }
 
-      return res.status(200).json({ message: "Notification marked as seen",notification });
-    }
-    else{
-      return res.status(400).json({ message: "User not found"});
-      
+      return res
+        .status(200)
+        .json({ message: "Notification marked as seen", notification });
+    } else {
+      return res.status(400).json({ message: "User not found" });
     }
   } catch (error) {
     console.log(error);
@@ -137,10 +137,8 @@ const markManyNotificationsAsSeen = async (req, res) => {
   }
 };
 
-
 const createAvatar = async (req, res) => {
   if (req.file) {
-    console.log(req.file.path);
     const { userId } = req.body;
     try {
       await Userdb.findByIdAndUpdate(
@@ -166,7 +164,6 @@ const createAvatar = async (req, res) => {
 const uploadImages = async function (req, res) {
   try {
     const { id } = req.user;
-    console.log(id, "id", "Im not sure we are running");
 
     await req?.files?.map(async (file) => {
       const newImage = { url: file.path, id: new mongoose.Types.ObjectId() };
@@ -193,7 +190,6 @@ const deleteUserImage = async function (req, res) {
       { _id: userId },
       { $pull: { userImages: { id: id } } }
     ).then((user) => {
-      console.log(user.userImages, "user images");
       return res.status(201).json({ message: "Image(s) deleted sucessfully" });
     });
   } catch (error) {
@@ -218,6 +214,130 @@ const getAllAccounts = async (req, res) => {
     res.status(200).json({ msg: "success", data: users });
   } catch (error) {
     res.status(400).json({ msg: "unsucessfull: could not users" });
+  }
+};
+
+const filterUsers = async (req, res) => {
+  try {
+    const {
+      hairColour,
+      eyeColour,
+      minAgeRange,
+      maxAgeRange,
+      gender,
+      bodyType,
+      relationshipStatus,
+      ethnic,
+      childrenNumber,
+      Languages,
+      sort,
+    } = req.query;
+
+    console.log(req.query, "query");
+    // Query Objects
+    const ProfileQueryObjects = {};
+    if (hairColour) {
+      ProfileQueryObjects[`profile_data.hair_colour`] = {
+        $regex: hairColour.toLowerCase(),
+        $options: "i",
+      };
+    }
+
+    if (eyeColour) {
+      ProfileQueryObjects[`profile_data.eye_colour`] = {
+        $regex: eyeColour.toLowerCase(),
+        $options: "i",
+      };
+    }
+    if (bodyType) {
+      ProfileQueryObjects[`profile_data.body_type`] = {
+        $regex: bodyType.toLowerCase(),
+        $options: "i",
+      };
+    }
+    if (ethnic) {
+      ProfileQueryObjects[`profile_data.ethnic_background`] = {
+        $regex: ethnic.toLowerCase(),
+        $options: "i",
+      };
+    }
+    if (childrenNumber) {
+      ProfileQueryObjects[`profile_data.no_of_children`] = {
+        $regex: childrenNumber.toLowerCase(),
+        $options: "i",
+      };
+    }
+    if (relationshipStatus) {
+      ProfileQueryObjects[`profile_data.relationship_status`] = {
+        $regex: relationshipStatus.toLowerCase(),
+        $options: "i",
+      };
+    }
+    if (Languages) {
+      ProfileQueryObjects[`profile_data.main_language`] = {
+        $regex: Languages,
+        $options: "i",
+      };
+    }
+    if (gender) {
+      ProfileQueryObjects[`registrationDataId.gender`] = {
+        $regex: gender,
+        $options: "i",
+      };
+    }
+
+    let result = Userdb.find(ProfileQueryObjects)
+      .populate("registrationDataId")
+      .sort({ isPremium: 1 });
+
+    // // Sorting Result
+    // if (sort) {
+    //   const sortList = sort.split(",").map((s) => {
+    //     const [field, order] = s.split(":");
+    //     console.log(field, order);
+    //     return [field, order === "desc" ? -1 : 1];
+    //   });
+    //   result = result.sort(sortList);
+    // } else {
+    //   result = result.sort({ isPremium: true });
+    // }
+
+    // Show Specific Fields
+    if (req.query.field) {
+      const fieldList = req.query.field.split(",").join(" ");
+      result = result.select(fieldList);
+    }
+
+    const page = Number(req.query.page);
+    const limit = Number(req.query.limit);
+    const skip = (page - 1) * limit;
+
+    result = result.skip(skip).limit(limit);
+    result.then((results) => {
+      if (minAgeRange || maxAgeRange) {
+        const users = results.map((user) => {
+          const userAge =
+            parseInt(new Date(Date.now()).getFullYear()) -
+            parseInt(
+              new Date(user.registrationDataId?.dateOfBirth).getFullYear()
+            );
+
+          if (userAge >= minAgeRange && userAge <= maxAgeRange) {
+            return user;
+          }
+        });
+        res.status(200).send({ data: users, message: "success: users found" });
+      } else {
+        res
+          .status(200)
+          .send({ data: results, message: "success: users found" });
+      }
+    });
+  } catch (error) {
+    console.log(error);
+    res
+      .status(500)
+      .json({ message: "something went wrong please try again", error });
   }
 };
 
@@ -406,5 +526,6 @@ module.exports = {
   getAllAccountsMail,
   removeFriend,
   uploadImages,
+  filterUsers,
   deleteUserImage,
 };

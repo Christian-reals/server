@@ -1,5 +1,5 @@
 const express = require('express');
-const { adminGetAllLoveQuests, deleteAccount, suspendAccount, activateAccount, banAccount, adminSignIn, adminSignup } = require('../controllers/admin');
+const { adminGetAllLoveQuests, deleteAccount, suspendAccount, activateAccount, banAccount, adminSignIn, adminSignup, generateAllUsersGraphData, generateAllPremiumUsersGraphData } = require('../controllers/admin');
 const { deleteLoveQuest, answerQuestion } = require('../controllers/loveQuest');
 const { getAllDevotionals, createDevotional, deleteDevotional } = require('../controllers/devotional');
 const { singleImage, singleMulterImageHandler } = require('../middleware/handleImageUpload');
@@ -42,6 +42,10 @@ route.get("/meetups",adminAuthMiddleware, getAllMeetups);
 route.post("/meetup", adminAuthMiddleware, adminCreateMeetup);
 route.put("/meetup/approve/:id", adminAuthMiddleware, approveMeetup);
 
+//generate graph data routes
+
+route.get('/graph/users/:year',adminAuthMiddleware,generateAllUsersGraphData)
+route.get('/graph/users/premium/:year',adminAuthMiddleware,generateAllPremiumUsersGraphData)
 
 
 

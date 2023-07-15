@@ -10,7 +10,6 @@ const {
 const moment = require("moment/moment");
 
 const register = async (req, res) => {
-  console.log("register request");
   const { password, confirm_password, userName, email, ...others } = req.body;
   const usernameExist = await registrationDb.findOne({ userName: userName });
   const emailExist = await registrationDb.findOne({ email });
@@ -67,7 +66,6 @@ const createProfile = async (req, res) => {
   console.log("request");
   if (req.body) {
     const { regId, ...profileData } = req.body;
-    console.log(regId, profileData);
     const user = new Userdb({
       registrationDataId: regId,
       profile_data: profileData,
